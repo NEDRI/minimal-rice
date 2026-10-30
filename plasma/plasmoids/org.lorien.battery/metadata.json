@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "System Information",
+        "Description": "Battery level, charge power and remaining time",
+        "Icon": "battery",
+        "Id": "org.lorien.battery",
+        "License": "GPL-2.0+",
+        "Name": "Battery Tile",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

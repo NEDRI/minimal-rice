@@ -1,0 +1,11 @@
+# Pakiety z AUR (yay). Waywallen to Wallpaper Engine dla Wayland; tapety ze Steama wymagają
+# własnego zakupu Wallpaper Engine.
+waywallen-bin
+waywallen-display
+plasma-wallpaper-waywallen
+gnome-shell-extension-waywallen
+plasma6-applets-panel-colorizer
+plasma6-applets-plasmusic-toolbar
+plasma6-applets-kara
+qogir-icon-theme
+pokemon-colorscripts-git

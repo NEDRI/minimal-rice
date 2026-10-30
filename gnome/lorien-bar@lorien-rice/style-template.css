@@ -1,0 +1,45 @@
+/* Lorien Bar: black rounded pills matching Isle's island, white icons, the accent only where something is open. Placeholders: @ACCENT@ (#rrggbb),
+   @R@ @G@ @B@. Saved changes apply right away. */
+
+#panel {
+    background-color: transparent;
+}
+
+#panel .panel-button {
+    background-color: #000000;   /* the same black as Isle's island in the middle */
+    border: none;
+    border-radius: 999px;
+    margin: 4px 2px;
+    padding: 0 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    color: #eeeeee;
+}
+
+#panel .panel-button:hover {
+    background-color: #262626;
+}
+
+/* open menu: filled with the accent, like an active toggle in the menu */
+#panel .panel-button:active,
+#panel .panel-button:checked {
+    background-color: @ACCENT@;
+    color: #1b1b1b;
+}
+
+#panel .panel-button .system-status-icon,
+#panel .panel-button StIcon {
+    color: #eeeeee;
+}
+
+#panel .panel-button:active .system-status-icon,
+#panel .panel-button:checked .system-status-icon,
+#panel .panel-button:active StIcon,
+#panel .panel-button:checked StIcon {
+    color: #1b1b1b;
+}
+
+/* the dock: same card look as the menu */
+#dashtodockContainer .dash-background {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+}

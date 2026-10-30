@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Waywallen
+Comment=Wallpaper Engine daemon (starts without UI; open it from the tray)
+Exec=waywallen --no-ui
+Icon=org.waywallen.waywallen
+Terminal=false
+X-KDE-autostart-phase=2

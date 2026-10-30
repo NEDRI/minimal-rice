@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Description": "Breeze with rounded, translucent desktop widget tiles",
+        "Id": "lorien",
+        "License": "LGPL",
+        "Name": "Lorien",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "5.0"
+}

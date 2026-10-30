@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "Date and Time",
+        "Description": "Big square clock tile for the desktop",
+        "Icon": "preferences-system-time",
+        "Id": "org.lorien.clocktile",
+        "License": "GPL-2.0+",
+        "Name": "Clock Tile",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

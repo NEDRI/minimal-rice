@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "Fun and Games",
+        "Description": "Pokémon sprite of the day from pokemon-colorscripts",
+        "Icon": "applications-games",
+        "Id": "org.lorien.pokemon",
+        "License": "GPL-2.0+",
+        "Name": "Pokémon of the Day",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

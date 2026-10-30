@@ -1,0 +1,7 @@
+{
+    "uuid": "lorien-bar@lorien-rice",
+    "name": "Lorien Bar",
+    "description": "Transparent top bar with pill-shaped buttons and a dock border in the wallpaper's accent colour (written by lorien-rice/accent-from-wallpaper.py).",
+    "shell-version": ["48", "49", "50", "51"],
+    "version": 1
+}

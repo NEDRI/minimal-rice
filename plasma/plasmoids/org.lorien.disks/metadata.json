@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "System Information",
+        "Description": "Disk usage and disk activity",
+        "Icon": "drive-harddisk",
+        "Id": "org.lorien.disks",
+        "License": "GPL-2.0+",
+        "Name": "Disks Tile",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

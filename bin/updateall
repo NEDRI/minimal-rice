@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# updateall: aktualizuje wszystko na tym komputerze, krok po kroku.
+#
+#   updateall               wszystkie kroki
+#   updateall flatpak rust  tylko wybrane kroki
+#   updateall --check       tylko pokaż, co czeka, nic nie instaluj
+#
+# Kroki: system (pacman + AUR przez yay), flatpak, firmware (fwupd), rust (rustup),
+# distrobox (wszystkie kontenery), zsh (oh-my-zsh), tldr. Błąd jednego kroku nie przerywa reszty.
+
+STEPS=(system flatpak firmware rust distrobox zsh tldr)
+ACC=$'\e[38;2;181;137;214m' DIM=$'\e[38;2;128;128;128m' OK=$'\e[38;2;197;152;231m' BAD=$'\e[38;2;223;122;155m' R=$'\e[0m'
+
+check=false
+selected=()
+for arg in "$@"; do
+    case "$arg" in
+        --check|-c) check=true ;;
+        -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) [[ " ${STEPS[*]} " == *" $arg "* ]] || { echo "nieznany krok: $arg (są: ${STEPS[*]})"; exit 2; }
+           selected+=("$arg") ;;
+    esac
+done
+((${#selected[@]})) || selected=("${STEPS[@]}")
+
+has() { command -v "$1" >/dev/null 2>&1; }
+header() { printf '\n%s━━ %s%s %s\n' "$ACC" "$1" "$R" "$DIM$2$R"; }
+declare -A result
+
+run_step() {
+    local name=$1
+    case "$name" in
+    system)
+        header "system" "pacman + AUR (yay)"
+        if $check; then checkupdates; yay -Qua; return 0; fi
+        yay -Syu ;;
+    flatpak)
+        has flatpak || return 3
+        header "flatpak" "aplikacje i środowiska"
+        if $check; then flatpak remote-ls --updates; return 0; fi
+        flatpak update -y && flatpak uninstall --unused -y ;;
+    firmware)
+        has fwupdmgr || return 3
+        header "firmware" "fwupd (BIOS, dysk, urządzenia USB)"
+        fwupdmgr refresh >/dev/null 2>&1
+        if $check; then
+            fwupdmgr get-updates --json 2>/dev/null | python3 -I -c '
+import json, sys
+for dev in json.load(sys.stdin).get("Devices", []):
+    rel = (dev.get("Releases") or [{}])[0]
+    print(dev.get("Name"), dev.get("Version"), "->", rel.get("Version"))'
+            return 0
+        fi
+        fwupdmgr update; local s=$?
+        ((s == 2)) && return 0 || return $s ;;   # 2 = nothing to update
+    rust)
+        has rustup || return 3
+        header "rust" "rustup toolchains"
+        if $check; then rustup check; return 0; fi
+        rustup update ;;
+    distrobox)
+        has distrobox || return 3
+        [[ -n "$(distrobox list --no-color 2>/dev/null | tail -n +2)" ]] || return 3
+        header "distrobox" "pakiety w kontenerach"
+        if $check; then distrobox list; return 0; fi
+        distrobox upgrade --all ;;
+    zsh)
+        [[ -f "$HOME/.oh-my-zsh/tools/upgrade.sh" ]] || return 3
+        header "zsh" "oh-my-zsh"
+        $check && return 0
+        ZSH="$HOME/.oh-my-zsh" zsh "$HOME/.oh-my-zsh/tools/upgrade.sh" ;;
+    tldr)
+        has tldr || return 3
+        header "tldr" "strony pomocy"
+        $check && return 0
+        tldr --update ;;
+    esac
+}
+
+before_kwin=$(pacman -Q kwin 2>/dev/null)
+before_kernel=$(pacman -Q linux 2>/dev/null)
+
+for step in "${selected[@]}"; do
+    run_step "$step"
+    case $? in
+        0) result[$step]="${OK}ok$R" ;;
+        3) result[$step]="${DIM}pominięty$R" ;;
+        *) result[$step]="${BAD}błąd$R" ;;
+    esac
+done
+
+header "podsumowanie"
+for step in "${selected[@]}"; do printf '  %-10s %s\n' "$step" "${result[$step]}"; done
+
+$check && exit 0
+notes=()
+[[ "$(pacman -Q kwin 2>/dev/null)" != "$before_kwin" ]] &&
+    notes+=("KWin zaktualizowany: wyloguj się i zaloguj, potem przebuduj ramki okien: ~/.local/share/lorien-rice/rebuild-corners.sh")
+[[ "$(pacman -Q linux 2>/dev/null)" != "$before_kernel" ]] &&
+    notes+=("Nowe jądro Linuksa: uruchom komputer ponownie.")
+orphans=$(pacman -Qdtq 2>/dev/null | wc -l)
+((orphans > 0)) && notes+=("$orphans osieroconych pakietów (pacman -Qdt); usuniesz je: yay -Yc")
+pacnew=$(find /etc -name '*.pacnew' 2>/dev/null | wc -l)
+((pacnew > 0)) && notes+=("$pacnew plików .pacnew w /etc do przejrzenia: sudo pacdiff")
+for n in "${notes[@]}"; do printf '%s!%s %s\n' "$BAD" "$R" "$n"; done
+exit 0

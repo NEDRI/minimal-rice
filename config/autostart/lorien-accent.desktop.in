@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Lorien accent
+Comment=Picks the accent colour from the current Waywallen wallpaper and follows its changes
+Exec=python3 -I @HOME@/.local/share/lorien-rice/accent-from-wallpaper.py --watch
+Icon=preferences-desktop-color
+Terminal=false
+NoDisplay=true
+X-KDE-autostart-phase=2

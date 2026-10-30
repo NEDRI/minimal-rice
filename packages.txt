@@ -1,0 +1,8 @@
+# Pakiety z oficjalnych repozytoriów (pacman). Linie z # to komentarze.
+# wspólne
+python python-pillow python-gobject imagemagick git base-devel cmake extra-cmake-modules
+ttf-jetbrains-mono-nerd konsole btop cava fastfetch pacman-contrib flatpak fwupd
+# KDE: ramki okien (KDE Rounded Corners) budowane ze źródeł
+kwin qt6-tools vulkan-headers kdecoration plasma5support kscreen spectacle
+# GNOME
+gnome-shell gnome-menus gnome-shell-extension-appindicator gnome-shell-extension-vitals adw-gtk-theme qt6-wayland

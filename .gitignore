@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+scripts/layout.js
+scripts/colorizer-*.js
+scripts/desktop.js
+scripts/desktop-geometry.json
+scripts/.note-backup

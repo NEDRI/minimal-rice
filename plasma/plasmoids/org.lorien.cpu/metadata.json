@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "lorien-rice"
+            }
+        ],
+        "Category": "System Information",
+        "Description": "Compact sensor readout (CPU, RAM, ...) with a Nerd Font icon",
+        "Icon": "cpu",
+        "Id": "org.lorien.cpu",
+        "License": "GPL-2.0+",
+        "Name": "Sensor Pill",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

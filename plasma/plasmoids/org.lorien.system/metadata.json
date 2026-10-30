@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "System Information",
+        "Description": "CPU and memory load with a CPU history line",
+        "Icon": "utilities-system-monitor",
+        "Id": "org.lorien.system",
+        "License": "GPL-2.0+",
+        "Name": "System Tile",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

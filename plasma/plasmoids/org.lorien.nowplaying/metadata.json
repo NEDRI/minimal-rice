@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "Multimedia",
+        "Description": "Now playing tile with a quiet idle state",
+        "Icon": "media-playback-start",
+        "Id": "org.lorien.nowplaying",
+        "License": "GPL-2.0+",
+        "Name": "Now Playing Tile",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
