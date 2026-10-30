@@ -34,7 +34,7 @@ Ciemny, minimalistyczny wygląd dla **KDE Plasma 6** i **GNOME** na Archu (Endea
 ## Instalacja
 
 ```bash
-git clone https://github.com/<użytkownik>/lorien-rice.git
+git clone https://github.com/NEDRI/lorien-rice.git
 cd lorien-rice
 ./install.sh
 ```
