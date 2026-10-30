@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Lorien rice: instalator dla Arch / EndeavourOS / CachyOS (KDE Plasma 6 i GNOME).
+# Lorien rice installer for Arch / EndeavourOS / CachyOS (KDE Plasma 6 and GNOME).
 #
-#   ./install.sh                 wszystko: pakiety, pliki, budowanie, wygląd KDE i GNOME
-#   ./install.sh --kde           tylko KDE        ./install.sh --gnome    tylko GNOME
-#   ./install.sh --city Kraków   miasto do kafelka pogody (bez pytania)
-#   ./install.sh --yes           bez pytań (miasto: Warszawa, jeśli nie podano --city)
-#   --no-packages  --no-build  --no-apply   pomija dany krok
+#   ./install.sh                 everything: packages, files, builds, the KDE and GNOME look
+#   ./install.sh --kde           KDE only         ./install.sh --gnome    GNOME only
+#   ./install.sh --city Krakow   city for the weather tile (without asking)
+#   ./install.sh --yes           no questions (city: Warsaw unless --city is given)
+#   --no-packages  --no-build  --no-apply   skip that step
 #
-# Przed nadpisaniem czegokolwiek robi kopię w ~/lorien-backup-<data>; ./uninstall.sh ją przywraca.
+# Before overwriting anything it saves a copy in ~/lorien-backup-<date>; ./uninstall.sh restores it.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -22,7 +22,7 @@ while (($#)); do
         --no-apply) apply=false ;;
         --city) city="$2"; shift ;;
         -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) echo "Nieznana opcja: $1 (zobacz --help)" >&2; exit 2 ;;
+        *) echo "Unknown option: $1 (see --help)" >&2; exit 2 ;;
     esac
     shift
 done
@@ -30,23 +30,23 @@ $kde || $gnome || { kde=true; gnome=true; }
 noconfirm=(); $yes && noconfirm=(--noconfirm)
 
 say() { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
-ask() { $yes && return 0; read -rp "$1 [T/n] " a; [[ -z "$a" || "$a" =~ ^[TtYy] ]]; }
+ask() { $yes && return 0; read -rp "$1 [Y/n] " a; [[ -z "$a" || "$a" =~ ^[Yy] ]]; }
 list() { grep -v '^\s*#' "$1" | tr -s ' \n' '\n' | grep -v '^$'; }
 
-[[ $EUID -ne 0 ]] || { echo "Uruchom jako zwykły użytkownik, nie root (sudo zapyta o hasło, gdy trzeba)." >&2; exit 1; }
-command -v pacman >/dev/null || { echo "To jest instalator dla Archa i pochodnych (brak pacmana)." >&2; exit 1; }
+[[ $EUID -ne 0 ]] || { echo "Run this as your normal user, not root (sudo asks for the password when needed)." >&2; exit 1; }
+command -v pacman >/dev/null || { echo "This installer is for Arch and its derivatives (pacman not found)." >&2; exit 1; }
 
-# ---------------------------------------------------------------- pakiety
+# ---------------------------------------------------------------- packages
 if $packages; then
-    say "Pakiety"
+    say "Packages"
     mapfile -t repo < <(list "$REPO/packages.txt")
     mapfile -t aur < <(list "$REPO/packages-aur.txt")
-    echo "Z repozytoriów: ${repo[*]}"
-    echo "Z AUR: ${aur[*]}"
-    if ask "Zainstalować brakujące pakiety?"; then
+    echo "From the repositories: ${repo[*]}"
+    echo "From the AUR: ${aur[*]}"
+    if ask "Install the missing packages?"; then
         sudo pacman -S --needed "${noconfirm[@]}" "${repo[@]}"
         if ! command -v yay >/dev/null; then
-            say "Instaluję yay (pomocnik AUR)"
+            say "Installing yay (AUR helper)"
             tmp="$(mktemp -d)"
             git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$tmp/yay-bin"
             (cd "$tmp/yay-bin" && makepkg -si --noconfirm)
@@ -56,9 +56,9 @@ if $packages; then
     fi
 fi
 
-# ---------------------------------------------------------------- kopia zapasowa
+# ---------------------------------------------------------------- backup
 BACKUP="$HOME/lorien-backup-$(date +%Y%m%d-%H%M%S)"
-say "Kopia zapasowa: $BACKUP"
+say "Backup: $BACKUP"
 mkdir -p "$BACKUP"
 for rel in .config/kdeglobals .config/kwinrc .config/kglobalshortcutsrc .config/konsolerc .config/plasmarc \
            .config/plasmashellrc .config/plasma-org.kde.plasma.desktop-appletsrc \
@@ -69,8 +69,8 @@ done
 command -v dconf >/dev/null && dconf dump / > "$BACKUP/dconf.ini" || true
 echo "$kde $gnome" > "$BACKUP/components"
 
-# ---------------------------------------------------------------- pliki
-say "Kopiuję pliki"
+# ---------------------------------------------------------------- files
+say "Copying files"
 L="$HOME/.local/share"
 mkdir -p "$L/lorien-rice" "$HOME/.local/bin" "$L/plasma/plasmoids" "$L/plasma/desktoptheme" "$L/color-schemes" \
          "$L/konsole" "$HOME/.config/panel-colorizer/presets" "$HOME/.config/autostart" "$HOME/.config/environment.d" \
@@ -97,13 +97,13 @@ if $gnome; then
     cp "$REPO/config/environment.d/20-lorien-decorations.conf" "$HOME/.config/environment.d/"
 fi
 
-# ---------------------------------------------------------------- pogoda
+# ---------------------------------------------------------------- weather
 if $kde; then
-    say "Pogoda"
+    say "Weather"
     if [[ -z "$city" ]]; then
-        if $yes; then city="Warszawa"; else read -rp "Miasto do kafelka pogody [Warszawa]: " city; city="${city:-Warszawa}"; fi
+        if $yes; then city="Warsaw"; else read -rp "City for the weather tile [Warsaw]: " city; city="${city:-Warsaw}"; fi
     fi
-    # BBC Weather (silnik pogody Plasmy) zna miejsca po identyfikatorze GeoNames; Open-Meteo go podaje
+    # BBC Weather (Plasma's weather engine) knows places by their GeoNames id, which Open-Meteo returns
     station="$(curl -fsSL --get "https://geocoding-api.open-meteo.com/v1/search" --data-urlencode "name=$city" \
         --data "count=1&language=en" | python3 -I -c '
 import json, sys
@@ -114,16 +114,16 @@ if r:
 ' || true)"
     if [[ -n "$station" ]]; then
         echo "$station" > "$HOME/.config/lorien-rice/weather-station"
-        echo "Stacja: ${station#bbcukmet|weather|}"
+        echo "Station: ${station#bbcukmet|weather|}"
     else
-        echo "Nie znalazłem miasta \"$city\"; kafelek pokaże Szczecin. Zmienisz to: ./install.sh --kde --no-packages --no-build --city <miasto>"
+        echo "City \"$city\" not found; the tile will show Szczecin. Change it with: ./install.sh --kde --no-packages --no-build --city <city>"
     fi
 fi
 
-# ---------------------------------------------------------------- budowanie i widżety z sieci
+# ---------------------------------------------------------------- builds and widgets from the web
 if $build; then
     if $kde; then
-        say "Widżety z GitHuba: wizualizer dźwięku (z poprawką kolorów) i Linexin Launcher"
+        say "Widgets from GitHub: audio visualizer (with the colour fix) and Linexin Launcher"
         tmp="$(mktemp -d)"
         url="$(curl -fsSL https://api.github.com/repos/luisbocanegra/plasma-audio-visualizer/releases/latest |
                python3 -I -c 'import json,sys; print([a["browser_download_url"] for a in json.load(sys.stdin)["assets"] if a["name"].endswith(".plasmoid")][0])')"
@@ -138,42 +138,42 @@ if $build; then
         kpackagetool6 -t Plasma/Applet -u "$tmp/linexin/package" 2>/dev/null || kpackagetool6 -t Plasma/Applet -i "$tmp/linexin/package"
         rm -rf "$tmp"
 
-        say "Ramki okien w stylu Hyprlanda (KDE Rounded Corners, wymaga sudo do instalacji)"
-        "$L/lorien-rice/rebuild-corners.sh" || echo "Ramki: nie udało się, spróbuj później poleceniem: ramka"
+        say "Hyprland-style window borders (KDE Rounded Corners, installing needs sudo)"
+        "$L/lorien-rice/rebuild-corners.sh" || echo "Window borders failed; try again later with: ramka"
     fi
     if $gnome; then
-        say "Mniejsze paski tytułowe aplikacji Qt w GNOME (qadwaitadecorations z poprawką)"
+        say "Smaller title bars for Qt apps in GNOME (patched qadwaitadecorations)"
         src="$HOME/.local/src/qadwaitadecorations"
         rm -rf "$src"
         git clone --depth 1 https://aur.archlinux.org/qadwaitadecorations.git "$src"
         printf '\n' >> "$src/PKGBUILD"
         cat "$REPO/patches/qadwaitadecorations/prepare.sh" >> "$src/PKGBUILD"
         sed -i 's/^pkgrel=\([0-9]*\)$/pkgrel=\1.1/' "$src/PKGBUILD"
-        (cd "$src" && makepkg -sfi "${noconfirm[@]}") || echo "Paski tytułowe: budowanie się nie udało (reszta działa)."
+        (cd "$src" && makepkg -sfi "${noconfirm[@]}") || echo "Title bars: the build failed (everything else works)."
 
-        say "Rozszerzenia GNOME (Dash to Dock, Blur my Shell, Just Perfection, ArcMenu, Isle)"
+        say "GNOME extensions (Dash to Dock, Blur my Shell, Just Perfection, ArcMenu, Isle)"
         "$L/lorien-rice/install-gnome-extensions.sh"   # Dash to Dock, Blur my Shell, Just Perfection, Isle
         "$L/lorien-rice/install-gnome-extensions.sh" arcmenu@arcmenu.com
     fi
 fi
 
-# ---------------------------------------------------------------- wygląd
+# ---------------------------------------------------------------- look
 if $apply; then
     if $gnome; then
-        say "Ustawienia GNOME"
+        say "GNOME settings"
         "$L/lorien-rice/make-gnome.sh"
         "$L/lorien-rice/make-gnome-apps.sh"
     fi
     if $kde; then
         if [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]]; then
-            say "Wygląd KDE (panele zostaną zastąpione)"
-            ask "Zastosować teraz układ paneli i kafelków?" && "$L/lorien-rice/apply-kde.sh"
+            say "KDE look (your panels will be replaced)"
+            ask "Apply the panel and tile layout now?" && "$L/lorien-rice/apply-kde.sh"
         else
-            echo "KDE: zaloguj się do Plasmy i uruchom: ~/.local/share/lorien-rice/apply-kde.sh"
+            echo "KDE: log in to Plasma and run: ~/.local/share/lorien-rice/apply-kde.sh"
         fi
     fi
 fi
 
-say "Gotowe"
-echo "Kopia poprzednich ustawień: $BACKUP (przywrócisz ją: $REPO/uninstall.sh)"
-echo "Wyloguj się i zaloguj ponownie. Tapety Wallpaper Engine: otwórz Waywallen z zasobnika i wskaż bibliotekę Steama."
+say "Done"
+echo "Backup of your previous settings: $BACKUP (restore it with: $REPO/uninstall.sh)"
+echo "Log out and log back in. Wallpaper Engine wallpapers: open Waywallen from the tray and point it to your Steam library."

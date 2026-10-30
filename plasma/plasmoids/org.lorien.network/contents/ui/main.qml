@@ -8,16 +8,16 @@ import org.kde.ksysguard.sensors as Sensors
 PlasmoidItem {
     id: root
 
-    readonly property string iface: "wlan0"
+    readonly property string iface: Plasmoid.configuration.iface
     readonly property int samples: 60
     property var down: []
 
     preferredRepresentation: fullRepresentation
-    toolTipMainText: ssid.value || "Sieć"
+    toolTipMainText: ssid.value || "Network"
     toolTipSubText: ["↓ " + (dl.formattedValue || "–") + "   ↑ " + (ul.formattedValue || "–"),
                      ip.value ? "IP " + ip.value : "",
-                     signal.value !== undefined ? "sygnał " + Math.round(Number(signal.value) || 0) + "%" : "",
-                     totalDl.formattedValue ? "od startu pobrano " + totalDl.formattedValue : ""].filter(s => s).join("\n")
+                     signal.value !== undefined ? "signal " + Math.round(Number(signal.value) || 0) + "%" : "",
+                     totalDl.formattedValue ? "downloaded since boot " + totalDl.formattedValue : ""].filter(s => s).join("\n")
 
     Sensors.Sensor { id: ssid; sensorId: "network/" + root.iface + "/network" }
     Sensors.Sensor { id: ip; sensorId: "network/" + root.iface + "/ipv4address" }
@@ -51,7 +51,7 @@ PlasmoidItem {
             spacing: Kirigami.Units.smallSpacing
 
             RowLayout {
-                Caption { text: "sieć" }
+                Caption { text: "network" }
                 Caption {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight

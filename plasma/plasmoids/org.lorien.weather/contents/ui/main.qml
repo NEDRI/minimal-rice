@@ -17,14 +17,14 @@ PlasmoidItem {
         .filter(f => f.length >= 5)
 
     preferredRepresentation: fullRepresentation
-    toolTipMainText: wx["Place"] || "Pogoda"
+    toolTipMainText: wx["Place"] || "Weather"
     toolTipSubText: ready ? [
         wx["Current Conditions"] + ", " + Math.round(wx["Temperature"]) + " °C",
-        "wilgotność " + wx["Humidity"] + "%",
-        "wiatr " + wx["Wind Speed"] + " km/h " + (wx["Wind Direction"] || ""),
-        "ciśnienie " + wx["Pressure"] + " hPa",
+        "humidity " + wx["Humidity"] + "%",
+        "wind " + wx["Wind Speed"] + " km/h " + (wx["Wind Direction"] || ""),
+        "pressure " + wx["Pressure"] + " hPa",
         wx["Credit"] || "",
-    ].join("\n") : "Ładuję pogodę…"
+    ].join("\n") : "Loading weather…"
 
     Plasma5Support.DataSource {
         id: weather
@@ -58,7 +58,7 @@ PlasmoidItem {
             spacing: Kirigami.Units.smallSpacing
 
             RowLayout {
-                Caption { text: (root.wx["Station"] || "pogoda").toLowerCase() }
+                Caption { text: (root.wx["Station"] || "weather").toLowerCase() }
                 Caption {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight

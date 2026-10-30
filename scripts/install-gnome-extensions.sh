@@ -13,8 +13,8 @@ for uuid in $UUIDS; do
         | python3 -I -c 'import json, sys; print(json.load(sys.stdin)["download_url"])')"
     curl -fsSL "https://extensions.gnome.org$url" -o "$WORK/$uuid.zip"
     gnome-extensions install --force "$WORK/$uuid.zip"
-    echo "zainstalowano $uuid"
+    echo "installed $uuid"
 done
 # Isle, the island in the top bar: its own installer checks the download's checksum
 [ $# -gt 0 ] || curl -fsSL https://raw.githubusercontent.com/zickrian/isle/main/get.sh | bash
-echo "Gotowe. Wyloguj się i zaloguj do sesji GNOME."
+echo "Done. Log out and log in to a GNOME session."

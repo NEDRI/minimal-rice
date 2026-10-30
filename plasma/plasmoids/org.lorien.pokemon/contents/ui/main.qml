@@ -14,7 +14,7 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     toolTipMainText: mon ? mon.name + "  #" + String(mon.id).padStart(3, "0") + (mon.shiny ? "  ✦ shiny" : "") : "Pokémon dnia"
-    toolTipSubText: "Kliknij, żeby wylosować innego"
+    toolTipSubText: "Click for another one"
 
     function load(arg) {
         exec.connectSource(script + (arg ? " " + arg : ""));

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# updateall: aktualizuje wszystko na tym komputerze, krok po kroku.
+# updateall: updates everything on this computer, step by step.
 #
-#   updateall               wszystkie kroki
-#   updateall flatpak rust  tylko wybrane kroki
-#   updateall --check       tylko pokaż, co czeka, nic nie instaluj
+#   updateall               all steps
+#   updateall flatpak rust  only the given steps
+#   updateall --check       only show what is pending, install nothing
 #
-# Kroki: system (pacman + AUR przez yay), flatpak, firmware (fwupd), rust (rustup),
-# distrobox (wszystkie kontenery), zsh (oh-my-zsh), tldr. Błąd jednego kroku nie przerywa reszty.
+# Steps: system (pacman + AUR via yay), flatpak, firmware (fwupd), rust (rustup),
+# distrobox (all containers), zsh (oh-my-zsh), tldr. A failing step does not stop the rest.
 
 STEPS=(system flatpak firmware rust distrobox zsh tldr)
 ACC=$'\e[38;2;181;137;214m' DIM=$'\e[38;2;128;128;128m' OK=$'\e[38;2;197;152;231m' BAD=$'\e[38;2;223;122;155m' R=$'\e[0m'
@@ -17,7 +17,7 @@ for arg in "$@"; do
     case "$arg" in
         --check|-c) check=true ;;
         -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) [[ " ${STEPS[*]} " == *" $arg "* ]] || { echo "nieznany krok: $arg (są: ${STEPS[*]})"; exit 2; }
+        *) [[ " ${STEPS[*]} " == *" $arg "* ]] || { echo "unknown step: $arg (steps: ${STEPS[*]})"; exit 2; }
            selected+=("$arg") ;;
     esac
 done
@@ -36,12 +36,12 @@ run_step() {
         yay -Syu ;;
     flatpak)
         has flatpak || return 3
-        header "flatpak" "aplikacje i środowiska"
+        header "flatpak" "apps and runtimes"
         if $check; then flatpak remote-ls --updates; return 0; fi
         flatpak update -y && flatpak uninstall --unused -y ;;
     firmware)
         has fwupdmgr || return 3
-        header "firmware" "fwupd (BIOS, dysk, urządzenia USB)"
+        header "firmware" "fwupd (BIOS, disk, USB devices)"
         fwupdmgr refresh >/dev/null 2>&1
         if $check; then
             fwupdmgr get-updates --json 2>/dev/null | python3 -I -c '
@@ -61,7 +61,7 @@ for dev in json.load(sys.stdin).get("Devices", []):
     distrobox)
         has distrobox || return 3
         [[ -n "$(distrobox list --no-color 2>/dev/null | tail -n +2)" ]] || return 3
-        header "distrobox" "pakiety w kontenerach"
+        header "distrobox" "packages in containers"
         if $check; then distrobox list; return 0; fi
         distrobox upgrade --all ;;
     zsh)
@@ -71,7 +71,7 @@ for dev in json.load(sys.stdin).get("Devices", []):
         ZSH="$HOME/.oh-my-zsh" zsh "$HOME/.oh-my-zsh/tools/upgrade.sh" ;;
     tldr)
         has tldr || return 3
-        header "tldr" "strony pomocy"
+        header "tldr" "help pages"
         $check && return 0
         tldr --update ;;
     esac
@@ -84,23 +84,23 @@ for step in "${selected[@]}"; do
     run_step "$step"
     case $? in
         0) result[$step]="${OK}ok$R" ;;
-        3) result[$step]="${DIM}pominięty$R" ;;
-        *) result[$step]="${BAD}błąd$R" ;;
+        3) result[$step]="${DIM}skipped$R" ;;
+        *) result[$step]="${BAD}failed$R" ;;
     esac
 done
 
-header "podsumowanie"
+header "summary"
 for step in "${selected[@]}"; do printf '  %-10s %s\n' "$step" "${result[$step]}"; done
 
 $check && exit 0
 notes=()
 [[ "$(pacman -Q kwin 2>/dev/null)" != "$before_kwin" ]] &&
-    notes+=("KWin zaktualizowany: wyloguj się i zaloguj, potem przebuduj ramki okien: ~/.local/share/lorien-rice/rebuild-corners.sh")
+    notes+=("KWin was updated: log out and back in, then rebuild the window borders: ramka")
 [[ "$(pacman -Q linux 2>/dev/null)" != "$before_kernel" ]] &&
-    notes+=("Nowe jądro Linuksa: uruchom komputer ponownie.")
+    notes+=("New Linux kernel: reboot.")
 orphans=$(pacman -Qdtq 2>/dev/null | wc -l)
-((orphans > 0)) && notes+=("$orphans osieroconych pakietów (pacman -Qdt); usuniesz je: yay -Yc")
+((orphans > 0)) && notes+=("$orphans orphaned packages (pacman -Qdt); remove them with: yay -Yc")
 pacnew=$(find /etc -name '*.pacnew' 2>/dev/null | wc -l)
-((pacnew > 0)) && notes+=("$pacnew plików .pacnew w /etc do przejrzenia: sudo pacdiff")
+((pacnew > 0)) && notes+=("$pacnew .pacnew files in /etc to review: sudo pacdiff")
 for n in "${notes[@]}"; do printf '%s!%s %s\n' "$BAD" "$R" "$n"; done
 exit 0

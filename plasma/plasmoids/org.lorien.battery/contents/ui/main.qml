@@ -35,19 +35,19 @@ PlasmoidItem {
         switch (state) {
         case "charging": return "+" + watts + (timeLeft ? "  " + timeLeft : "");
         case "discharging": return timeLeft || "−" + watts;
-        case "fully-charged": return "pełna";
+        case "fully-charged": return "full";
         case "pending-charge": return "limit " + limit + "%";
         default: return "";
         }
     }
 
     preferredRepresentation: fullRepresentation
-    toolTipMainText: "Bateria " + Math.round(percent) + "%"
+    toolTipMainText: "Battery " + Math.round(percent) + "%"
     toolTipSubText: [
-        { charging: "ładowanie " + watts, discharging: "na baterii, pobór " + watts, "fully-charged": "naładowana",
-          "pending-charge": "na zasilaczu, ładowanie do " + limit + "%" }[state] || "",
-        timeLeft ? (charging ? "do pełna " : "zostało ") + timeLeft : "",
-        energyDesign > 0 ? "kondycja " + Math.round(energyFull / energyDesign * 100) + "%" : "",
+        { charging: "charging " + watts, discharging: "on battery, drawing " + watts, "fully-charged": "fully charged",
+          "pending-charge": "plugged in, charging up to " + limit + "%" }[state] || "",
+        timeLeft ? (charging ? "full in " : "left ") + timeLeft : "",
+        energyDesign > 0 ? "health " + Math.round(energyFull / energyDesign * 100) + "%" : "",
     ].concat(extras.map(e => e.name + " " + e.percent + "%")).filter(s => s).join("\n")
 
     function parse(text) {
@@ -108,7 +108,7 @@ PlasmoidItem {
             spacing: Kirigami.Units.smallSpacing
 
             RowLayout {
-                Caption { text: "bateria" }
+                Caption { text: "battery" }
                 Caption {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight

@@ -98,4 +98,4 @@ dconf write ${J}activities-button false
 dconf write ${J}workspace-popup false
 dconf write ${J}startup-status 0
 
-echo "GNOME ustawiony. Rozszerzenia: $HERE/install-gnome-extensions.sh"
+echo "GNOME is set up. Extensions: $HERE/install-gnome-extensions.sh"

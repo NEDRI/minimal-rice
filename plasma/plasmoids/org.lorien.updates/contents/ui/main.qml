@@ -26,17 +26,15 @@ PlasmoidItem {
     readonly property bool kwinPending: repo.some(p => /^kwin /.test(p))
 
     preferredRepresentation: fullRepresentation
-    toolTipMainText: total > 0 ? total + " " + plural(total) + " do aktualizacji" : "System aktualny"
+    toolTipMainText: total > 0 ? total + " " + plural(total) + " to update" : "System up to date"
     toolTipSubText: repo.concat(aur).slice(0, 8).map(p => p.split(" ")[0] + " " + p.split(" ")[3]).join("\n")
         + (total > 8 ? "\n…" : "")
-        + (cornersBroken ? "\n\nRamki okien nie działają: kliknij czerwony napis, żeby je przebudować."
-           : kwinPending ? "\n\nKWin w aktualizacji: po niej przebuduj ramki okien." : "")
-        + (checkedAt.getTime() ? "\n\nsprawdzono " + Qt.formatTime(checkedAt, "HH:mm") + ", kliknij, żeby zaktualizować" : "")
+        + (cornersBroken ? "\n\nWindow borders are not working: click the red text to rebuild them."
+           : kwinPending ? "\n\nKWin is in this update: rebuild the window borders afterwards." : "")
+        + (checkedAt.getTime() ? "\n\nchecked at " + Qt.formatTime(checkedAt, "HH:mm") + ", click to update" : "")
 
     function plural(n) {
-        if (n === 1) return "pakiet";
-        const d = n % 10, t = n % 100;
-        return d >= 2 && d <= 4 && (t < 12 || t > 14) ? "pakiety" : "pakietów";
+        return n === 1 ? "package" : "packages";
     }
 
     function check() {
@@ -77,7 +75,7 @@ PlasmoidItem {
 
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
-            text: "Sprawdź teraz"
+            text: "Check now"
             icon.name: "view-refresh"
             onTriggered: root.check()
         }
@@ -107,11 +105,11 @@ PlasmoidItem {
             spacing: Kirigami.Units.smallSpacing
 
             RowLayout {
-                Caption { text: "aktualizacje" }
+                Caption { text: "updates" }
                 Item { Layout.fillWidth: true }
                 Caption {
                     visible: root.cornersBroken || root.kwinPending
-                    text: root.cornersBroken ? "przebuduj ramki" : "kwin: potem przebuduj ramki"
+                    text: root.cornersBroken ? "rebuild borders" : "kwin: rebuild borders after"
                     color: "#df7a9b"
                     opacity: 1
                     MouseArea {
@@ -134,9 +132,9 @@ PlasmoidItem {
                 }
                 Caption {
                     Layout.alignment: Qt.AlignBaseline
-                    text: root.checking && !root.checkedAt.getTime() ? "sprawdzam"
+                    text: root.checking && !root.checkedAt.getTime() ? "checking"
                         : root.failed && root.total === 0 ? "offline"
-                        : root.total > 0 ? root.plural(root.total) : "aktualny"
+                        : root.total > 0 ? root.plural(root.total) : "up to date"
                 }
             }
         }

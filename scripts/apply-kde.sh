@@ -62,4 +62,4 @@ rm -f "$HOME"/.cache/plasma_theme_lorien*.kcache "$HOME"/.cache/plasma-svgelemen
 sleep 5
 rm -f "$HOME"/.cache/lorien-accent-KDE
 python3 -I "$HERE/accent-from-wallpaper.py" || true
-echo "KDE gotowe. Wyloguj się i zaloguj ponownie, żeby czcionki i skróty objęły wszystkie aplikacje."
+echo "KDE done. Log out and log back in so fonts and shortcuts reach every app."

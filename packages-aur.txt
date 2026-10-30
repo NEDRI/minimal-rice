@@ -1,5 +1,5 @@
-# Pakiety z AUR (yay). Waywallen to Wallpaper Engine dla Wayland; tapety ze Steama wymagają
-# własnego zakupu Wallpaper Engine.
+# Packages from the AUR (yay). Waywallen is Wallpaper Engine for Wayland; Steam wallpapers need
+# your own copy of Wallpaper Engine.
 waywallen-bin
 waywallen-display
 plasma-wallpaper-waywallen

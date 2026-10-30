@@ -11,9 +11,9 @@ PlasmoidItem {
     readonly property real usedPercent: Number(usedPct.value) || 0
 
     preferredRepresentation: fullRepresentation
-    toolTipMainText: "Dysk / " + Math.round(usedPercent) + "% zajęty"
-    toolTipSubText: (used.formattedValue || "") + " z " + (total.formattedValue || "")
-        + "\nodczyt " + (rd.formattedValue || "–") + ", zapis " + (wr.formattedValue || "–")
+    toolTipMainText: "Disk / " + Math.round(usedPercent) + "% used"
+    toolTipSubText: (used.formattedValue || "") + " of " + (total.formattedValue || "")
+        + "\nread " + (rd.formattedValue || "–") + ", write " + (wr.formattedValue || "–")
 
     Sensors.Sensor { id: used; sensorId: "disk/all/used"; updateRateLimit: 10000 }
     Sensors.Sensor { id: total; sensorId: "disk/all/total"; updateRateLimit: 60000 }
@@ -40,12 +40,12 @@ PlasmoidItem {
             spacing: Kirigami.Units.smallSpacing
 
             RowLayout {
-                Caption { text: "dysk" }
+                Caption { text: "disk" }
                 Caption {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
-                    text: (free.formattedValue || "–") + " wolne"
+                    text: (free.formattedValue || "–") + " free"
                 }
             }
             Item { Layout.fillHeight: true }

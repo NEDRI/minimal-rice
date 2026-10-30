@@ -15,7 +15,7 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     toolTipMainText: "Terminal"
-    toolTipSubText: "Kliknij profil, żeby otworzyć Konsolę"
+    toolTipSubText: "Click a profile to open Konsole"
 
     Plasma5Support.DataSource {
         id: exec

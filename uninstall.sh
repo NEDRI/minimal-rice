@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Przywraca ustawienia sprzed ./install.sh z kopii ~/lorien-backup-<data> (domyślnie najnowszej)
-# i usuwa pliki Lorien. Pakietów nie odinstalowuje.
+# Restores the settings from before ./install.sh from a ~/lorien-backup-<date> copy (the newest by
+# default) and removes the Lorien files. Packages stay installed.
 #   ./uninstall.sh [~/lorien-backup-20261030-1800]
 set -euo pipefail
 BACKUP="${1:-$(ls -d "$HOME"/lorien-backup-* 2>/dev/null | sort | tail -1)}"
-[[ -d "$BACKUP" ]] || { echo "Nie znalazłem kopii ~/lorien-backup-*." >&2; exit 1; }
-echo "Przywracam z: $BACKUP"
-read -rp "Kontynuować? [T/n] " a; [[ -z "$a" || "$a" =~ ^[TtYy] ]] || exit 0
+[[ -d "$BACKUP" ]] || { echo "No ~/lorien-backup-* copy found." >&2; exit 1; }
+echo "Restoring from: $BACKUP"
+read -rp "Continue? [Y/n] " a; [[ -z "$a" || "$a" =~ ^[Yy] ]] || exit 0
 
 L="$HOME/.local/share"
 rm -rf "$L/lorien-rice" "$L"/plasma/plasmoids/org.lorien.* "$L/plasma/desktoptheme/lorien" \
@@ -15,14 +15,14 @@ rm -rf "$L/lorien-rice" "$L"/plasma/plasmoids/org.lorien.* "$L/plasma/desktopthe
        "$HOME/.config/autostart/lorien-accent.desktop" "$HOME/.config/autostart/waywallen.desktop" \
        "$HOME/.config/environment.d/20-lorien-decorations.conf" \
        "$HOME/.local/bin/updateall" "$HOME/.local/bin/ramka" "$HOME/.local/bin/rmaka"
-rm -f "$L"/konsole/{Aktualizacja,btop,Cava,Lorien}.profile "$L/konsole/Lorien.colorscheme" \
+rm -f "$L"/konsole/{Update,btop,Cava,Lorien}.profile "$L/konsole/Lorien.colorscheme" \
       "$HOME"/.cache/lorien-accent-*
 
-# plasmashell zapisuje swój układ przy wyjściu, więc na czas przywracania go zatrzymaj
+# plasmashell saves its layout when it exits, so stop it while restoring
 plasma=false
 systemctl --user is-active -q plasma-plasmashell.service 2>/dev/null && plasma=true
 $plasma && systemctl --user stop plasma-plasmashell.service
-# pliki, które istniały przed instalacją, wracają z kopii
+# files that existed before the install come back from the copy
 (cd "$BACKUP" && find . -type f ! -name dconf.ini ! -name components) | while read -r rel; do
     mkdir -p "$HOME/$(dirname "$rel")"
     cp -a "$BACKUP/$rel" "$HOME/$rel"
@@ -32,5 +32,5 @@ if [[ -f "$BACKUP/dconf.ini" ]] && command -v dconf >/dev/null; then
     dconf reset -f /org/gnome/shell/extensions/
     dconf load / < "$BACKUP/dconf.ini"
 fi
-echo "Przywrócone. Wyloguj się i zaloguj ponownie. Ramki okien (KDE Rounded Corners) i pakiety zostają;"
-echo "usuniesz je ręcznie, np.: sudo pacman -Rns qadwaitadecorations-qt6 waywallen-bin"
+echo "Restored. Log out and log back in. The window borders (KDE Rounded Corners) and packages stay;"
+echo "remove them by hand, e.g.: sudo pacman -Rns qadwaitadecorations-qt6 waywallen-bin"

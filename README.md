@@ -1,37 +1,37 @@
 # Lorien rice
 
-Ciemny, minimalistyczny wygląd dla **KDE Plasma 6** i **GNOME** na Archu (EndeavourOS, CachyOS). Akcent kolorystyczny dobiera się sam do tapety, również do animowanej tapety z Wallpaper Engine.
+A dark, minimal look for **KDE Plasma 6** and **GNOME** on Arch (EndeavourOS, CachyOS). The accent colour follows the wallpaper, including animated Wallpaper Engine wallpapers.
 
-## Co dostajesz
+## What you get
 
 **KDE Plasma**
-- Przezroczysty górny pasek z „wyspami” (Panel Colorizer): CPU, RAM, sieć, bateria, wizualizer dźwięku.
-- Pływający dok na dole.
-- Minimalne kafelki na pulpicie w dwóch kolumnach po bokach:
-  - pogoda, zegar binarny, odtwarzacz, Pokémon dnia, terminale;
-  - system, sieć, bateria, dyski, aktualizacje, notatka.
-- Ramki okien w stylu Hyprlanda (KDE Rounded Corners) w kolorze akcentu.
-- Czcionka JetBrains Mono, kolory system24, ikony Qogir.
-- Skróty:
-  - `Super+Q` zamyka okno;
-  - `Super+Enter` otwiera Konsolę;
-  - `Super+Shift+S` robi zrzut obszaru;
-  - `Super+strzałki` układają okna.
+- Transparent top bar with "islands" (Panel Colorizer): CPU, RAM, network, battery and an audio visualizer.
+- Floating dock at the bottom.
+- Minimal desktop tiles in two columns along the screen edges:
+  - weather, binary clock, now playing, Pokémon of the day, terminals;
+  - system, network, battery, disks, updates, a note.
+- Hyprland-style window borders (KDE Rounded Corners) in the accent colour.
+- JetBrains Mono font, system24 colours, Qogir icons.
+- Shortcuts:
+  - `Super+Q` closes the window;
+  - `Super+Enter` opens Konsole;
+  - `Super+Shift+S` takes a region screenshot;
+  - `Super+arrows` tile windows.
 
 **GNOME**
-- Lorien Bar: przezroczysty pasek z czarnymi „pigułkami” jak wyspa Isle; po otwarciu menu przycisk wypełnia się kolorem akcentu.
-- Isle (wyspa na środku paska), Dash to Dock, ArcMenu, Vitals, Blur my Shell.
-- Foldery w siatce aplikacji.
-- Mniejsze, ciemne paski tytułowe w aplikacjach Qt i Electron.
-- Te same skróty co w KDE, plus `Super+E` do otwierania plików.
+- Lorien Bar: a transparent top bar with black pills like the Isle island; when a menu is open, its button fills with the accent colour.
+- Isle (the island in the middle of the bar), Dash to Dock, ArcMenu, Vitals, Blur my Shell.
+- App folders in the app grid.
+- Smaller, dark title bars for Qt and Electron apps.
+- The same shortcuts as in KDE, plus `Super+E` to open Files.
 
-**Wspólne**
-- Waywallen, czyli tapety z Wallpaper Engine na Waylandzie.
-- Akcent z tapety: zmienia się razem z tapetą, a bez Wallpaper Engine bierze kolor ze zwykłej tapety.
-- `updateall` aktualizuje wszystko: pacman i AUR, flatpak, firmware, rust, distrobox, oh-my-zsh, tldr. `updateall --check` tylko pokazuje, co czeka.
-- `ramka` przebudowuje ramki okien po aktualizacji KDE.
+**Both**
+- Waywallen: Wallpaper Engine wallpapers on Wayland.
+- Accent from the wallpaper: it changes with the wallpaper, and without Wallpaper Engine it takes the colour from the regular wallpaper.
+- `updateall` updates everything: pacman and AUR, flatpak, firmware, rust, distrobox, oh-my-zsh, tldr. `updateall --check` only lists what is pending.
+- `ramka` rebuilds the window borders after a KDE update.
 
-## Instalacja
+## Installation
 
 ```bash
 git clone https://github.com/NEDRI/lorien-rice.git
@@ -39,54 +39,54 @@ cd lorien-rice
 ./install.sh
 ```
 
-Instalator:
-1. Pokazuje listę pakietów i pyta przed instalacją (`packages.txt` i `packages-aur.txt`; doinstaluje `yay`, jeśli go nie masz).
-2. Zapisuje kopię Twoich ustawień w `~/lorien-backup-<data>`.
-3. Pyta o miasto do kafelka pogody.
-4. Buduje ramki okien i paski tytułowe; `sudo` zapyta o hasło.
-5. W sesji KDE pyta, czy zastąpić panele nowym układem.
+The installer:
+1. Shows the package list and asks before installing (`packages.txt` and `packages-aur.txt`; installs `yay` if you don't have it).
+2. Saves a copy of your settings in `~/lorien-backup-<date>`.
+3. Asks for your city for the weather tile.
+4. Builds the window borders and the title bars; `sudo` will ask for your password.
+5. In a KDE session, asks before replacing your panels with the new layout.
 
-Na końcu **wyloguj się i zaloguj ponownie**.
+When it finishes, **log out and log back in**.
 
-Opcje:
-- `--kde` / `--gnome`: tylko jeden pulpit.
-- `--city Kraków`: miasto bez pytania.
-- `--yes`: bez pytań.
-- `--no-packages`, `--no-build`, `--no-apply`: pomija dany krok.
+Options:
+- `--kde` / `--gnome`: only one desktop.
+- `--city Krakow`: set the city without asking.
+- `--yes`: no questions.
+- `--no-packages`, `--no-build`, `--no-apply`: skip that step.
 
-Jeśli instalujesz z GNOME, a chcesz mieć też KDE, zaloguj się później do Plasmy i uruchom:
+If you install from GNOME and want KDE too, log in to Plasma later and run:
 
 ```bash
 ~/.local/share/lorien-rice/apply-kde.sh
 ```
 
-## Tapety Wallpaper Engine
+## Wallpaper Engine wallpapers
 
-Waywallen korzysta z tapet z **Twojego** Steama: potrzebujesz kupionego Wallpaper Engine i pobranych tapet z Warsztatu. Otwórz Waywallen z zasobnika, wskaż bibliotekę Steama i wybierz tapetę. W KDE ustaw tapetę pulpitu na „Waywallen” (Prawy klik na pulpicie → Konfiguruj pulpit i tapetę).
+Waywallen uses the wallpapers from **your own** Steam library: you need a purchased copy of Wallpaper Engine and wallpapers downloaded from the Workshop. Open Waywallen from the system tray, point it to your Steam library and pick a wallpaper. In KDE, set the desktop wallpaper type to "Waywallen" (right-click the desktop → Configure Desktop and Wallpaper).
 
-Bez Wallpaper Engine wszystko działa na zwykłej tapecie, a akcent bierze z niej kolor.
+Without Wallpaper Engine everything works with a regular wallpaper, and the accent takes its colour from it.
 
-## Po aktualizacjach
+## After updates
 
-- **Po aktualizacji KDE** ramki okien mogą zniknąć. Zaloguj się ponownie i wpisz `ramka`.
-- **Gdy `yay` zaktualizuje `qadwaitadecorations-qt6`**, paski tytułowe w GNOME wrócą do dużych. Przebuduj je:
+- **After a KDE update** the window borders may disappear. Log out, log back in and run `ramka`.
+- **When `yay` updates `qadwaitadecorations-qt6`**, the GNOME title bars go back to the large size. Rebuild them:
   ```bash
   ./install.sh --gnome --no-packages --no-apply
   ```
 
-## Odinstalowanie
+## Uninstalling
 
 ```bash
 ./uninstall.sh
 ```
 
-Przywraca ustawienia z najnowszej kopii `~/lorien-backup-*` i usuwa pliki Lorien. Pakiety zostają.
+Restores your settings from the newest `~/lorien-backup-*` copy and removes the Lorien files. Packages stay installed.
 
-## Podziękowania
+## Credits
 
-- [mayanklad/cachyos-kde-pixel-rice](https://github.com/mayanklad/cachyos-kde-pixel-rice): presety Panel Colorizera, punkt wyjścia.
-- [refact0r/system24](https://github.com/refact0r/system24): paleta kolorów.
-- [luisbocanegra](https://github.com/luisbocanegra): Panel Colorizer i Audio Visualizer.
+- [mayanklad/cachyos-kde-pixel-rice](https://github.com/mayanklad/cachyos-kde-pixel-rice): Panel Colorizer presets, the starting point.
+- [refact0r/system24](https://github.com/refact0r/system24): colour palette.
+- [luisbocanegra](https://github.com/luisbocanegra): Panel Colorizer and Audio Visualizer.
 - [matinlotfali/KDE-Rounded-Corners](https://github.com/matinlotfali/KDE-Rounded-Corners), [zickrian/isle](https://github.com/zickrian/isle), [Waywallen](https://github.com/waywallen/waywallen), [QAdwaitaDecorations](https://github.com/FedoraQt/QAdwaitaDecorations), [pokemon-colorscripts](https://gitlab.com/phoneybadger/pokemon-colorscripts).
 
-Licencja: GPL-3.0-or-later (zobacz `LICENSE`).
+License: GPL-3.0-or-later (see `LICENSE`).

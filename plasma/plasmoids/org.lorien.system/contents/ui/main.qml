@@ -14,7 +14,7 @@ PlasmoidItem {
     preferredRepresentation: fullRepresentation
     toolTipMainText: "System"
     toolTipSubText: "CPU " + Math.round(Number(cpu.value) || 0) + "%, RAM " + (ramUsed.formattedValue || "–")
-        + " z " + (ramTotal.formattedValue || "–") + "\ntemperatura CPU " + Math.round(Number(temp.value) || 0) + " °C"
+        + " of " + (ramTotal.formattedValue || "–") + "\nCPU temperature " + Math.round(Number(temp.value) || 0) + " °C"
 
     Sensors.Sensor { id: cpu; sensorId: "cpu/all/usage"; updateRateLimit: 1000 }
     Sensors.Sensor { id: ram; sensorId: "memory/physical/usedPercent"; updateRateLimit: 2000 }

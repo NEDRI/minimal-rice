@@ -14,7 +14,7 @@ PlasmoidItem {
     readonly property bool playing: active && player.playbackStatus === Mpris.PlaybackStatus.Playing
 
     preferredRepresentation: fullRepresentation
-    toolTipMainText: active ? player.track : "Nic teraz nie gra"
+    toolTipMainText: active ? player.track : "Nothing playing"
     toolTipSubText: active ? player.artist : ""
 
     Mpris.Mpris2Model {
@@ -51,11 +51,11 @@ PlasmoidItem {
             ColumnLayout {
                 spacing: 0
                 PlasmaComponents.Label {
-                    text: "Nic teraz nie gra"
+                    text: "Nothing playing"
                     font.bold: true
                 }
                 PlasmaComponents.Label {
-                    text: "Włącz muzykę, a pojawi się tutaj"
+                    text: "Play some music and it shows up here"
                     opacity: 0.5
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                 }

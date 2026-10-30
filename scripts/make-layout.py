@@ -106,6 +106,15 @@ def have_app(launcher):
 
 
 HAS_BATTERY = bool(glob.glob("/sys/class/power_supply/BAT*"))
+
+
+def network_iface():
+    """The Wi-Fi card, else the first wired one, for org.lorien.network."""
+    wifi = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob("/sys/class/net/*/wireless"))
+    wired = sorted(n for n in os.listdir("/sys/class/net")
+                   if n != "lo" and os.path.exists(f"/sys/class/net/{n}/device"))
+    return (wifi or wired or ["wlan0"])[0]
+
 # BBC Weather station for org.lorien.weather; install.sh writes it from the city the user gives
 try:
     WEATHER_STATION = open(os.path.expanduser("~/.config/lorien-rice/weather-station")).read().strip()
@@ -119,10 +128,10 @@ layout = {
             "autoFontAndSize": False, "fontFamily": "JetBrainsMono Nerd Font", "fontWeight": 700, "fontSize": 11}}],
         ["org.lorien.cpu", {}],
         ["org.lorien.cpu", {"General": {"sensorId": "memory/physical/usedPercent", "icon": "\U000f035b", "title": "RAM", "decimals": 0}}],
-        ["org.lorien.cpu", {"General": {"sensorId": "network/all/download", "icon": "\U000f01da", "title": "Pobieranie", "unit": "formatted"}}],
-        ["org.lorien.cpu", {"General": {"sensorId": "network/all/upload", "icon": "\U000f0552", "title": "Wysyłanie", "unit": "formatted"}}],
+        ["org.lorien.cpu", {"General": {"sensorId": "network/all/download", "icon": "\U000f01da", "title": "Download", "unit": "formatted"}}],
+        ["org.lorien.cpu", {"General": {"sensorId": "network/all/upload", "icon": "\U000f0552", "title": "Upload", "unit": "formatted"}}],
     ] + ([
-        ["org.lorien.cpu", {"General": {"sensorId": "power/0001/chargePercentage", "icon": "\U000f0079", "title": "Bateria", "decimals": 0}}],
+        ["org.lorien.cpu", {"General": {"sensorId": "power/0001/chargePercentage", "icon": "\U000f0079", "title": "Battery", "decimals": 0}}],
     ] if HAS_BATTERY else []) + [
         ["org.dhruv8sh.kara", {"general": {"spacing": 4, "type": 0}}],
         ["org.kde.plasma.appmenu", {}],
@@ -177,7 +186,7 @@ layout = {
 
         # right column: system state, then the note
         ["org.lorien.system", cell("right", 0, 0), {}],
-        ["org.lorien.network", cell("right", 1, 0), {}],
+        ["org.lorien.network", cell("right", 1, 0), {"General": {"iface": network_iface()}}],
         ["org.lorien.battery", cell("right", 0, 1), {}],
         ["org.lorien.disks", cell("right", 1, 1), {}],
         ["org.lorien.updates", cell("right", 0, 2, cols=2), {}],

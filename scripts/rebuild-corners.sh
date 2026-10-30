@@ -12,14 +12,14 @@ cmake -B build
 cmake --build build -j"$(nproc)"
 sudo cmake --install build
 if ! qdbus6 org.kde.KWin /Effects >/dev/null 2>&1; then
-    echo "Ramki okien zbudowane; KWin wczyta je przy następnym logowaniu do KDE."
+    echo "Window borders built; KWin loads them at the next KDE login."
     exit 0
 fi
 qdbus6 org.kde.KWin /Effects org.kde.kwin.Effects.unloadEffect kwin4_effect_shapecorners >/dev/null || true
 if [ "$(qdbus6 org.kde.KWin /Effects org.kde.kwin.Effects.loadEffect kwin4_effect_shapecorners)" = "true" ]; then
     qdbus6 org.kde.KWin /Effects org.kde.kwin.Effects.reconfigureEffect kwin4_effect_shapecorners
-    echo "Ramki okien przebudowane i włączone."
+    echo "Window borders rebuilt and enabled."
 else
-    echo "Efekt zbudowany, ale KWin go nie wczytał. Szczegóły: journalctl --user -b | grep shapecorners" >&2
+    echo "The effect was built but KWin did not load it. Details: journalctl --user -b | grep shapecorners" >&2
     exit 1
 fi

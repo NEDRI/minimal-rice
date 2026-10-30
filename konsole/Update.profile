@@ -9,7 +9,7 @@ UseCustomCursorColor=true
 
 [General]
 Command=/bin/zsh -c '@HOME@/.local/bin/updateall; exec zsh'
-Name=aktualizacja
+Name=update
 Parent=FALLBACK/
 TerminalCenter=false
 TerminalMargin=14

@@ -42,10 +42,10 @@ folder() {  # id, name, desktop ids...
     FOLDERS="$FOLDERS'$id', "
 }
 FOLDERS=""
-folder Programowanie "Programowanie" matlab cmake-gui nvim vim org.gnome.Meld org.kde.kate org.thonny.Thonny \
+folder Programming "Programming" matlab cmake-gui nvim vim org.gnome.Meld org.kde.kate org.thonny.Thonny \
     com.jetbrains.CLion dev.zed.Zed org.codeblocks.codeblocks org.gaphor.Gaphor io.github.tobagin.digger \
     com.github.finefindus.eyedropper
-folder Elektronika "Elektronika" org.kicad.kicad org.kicad.eeschema org.kicad.pcbnew org.kicad.gerbview \
+folder Electronics "Electronics" org.kicad.kicad org.kicad.eeschema org.kicad.pcbnew org.kicad.gerbview \
     org.kicad.bitmap2component org.kicad.pcbcalculator ltspice stm32cubeide-2.2.0 stm32cubemx stm32cubeprog \
     stm32cubeprog-trusted-package-creator stlink-gui cc.arduino.IDE2 cc.arduino.arduinoide
 folder Internet "Internet" com.google.Chrome org.torproject.torbrowser-launcher org.telegram.desktop \
@@ -55,15 +55,15 @@ folder Internet "Internet" com.google.Chrome org.torproject.torbrowser-launcher 
 folder Multimedia "Multimedia" vlc mpv org.kde.haruna io.github.diegopvlk.Cine org.kde.gwenview org.kde.krita \
     com.github.wwmm.easyeffects lsp-plugins org.rncbc.qtractor org.pulseaudio.pavucontrol org.gnome.NetworkDisplays \
     hp-uiscan
-folder Biuro "Biuro" org.libreoffice.LibreOffice org.libreoffice.LibreOffice.writer org.libreoffice.LibreOffice.calc \
+folder Office "Office" org.libreoffice.LibreOffice org.libreoffice.LibreOffice.writer org.libreoffice.LibreOffice.calc \
     org.libreoffice.LibreOffice.impress org.libreoffice.LibreOffice.draw org.libreoffice.LibreOffice.math \
     org.libreoffice.LibreOffice.base org.kde.okular
-folder Gry "Gry" com.valvesoftware.Steam com.heroicgameslauncher.hgl org.prismlauncher.PrismLauncher \
+folder Games "Games" com.valvesoftware.Steam com.heroicgameslauncher.hgl org.prismlauncher.PrismLauncher \
     com.usebottles.bottles net.hhoney.tinycrate org.hnefatafl.hnefatafl_client io.github.josephmawa.SpellingBee
 folder System "System" btop htop net.nokyan.Resources com.tuxedocomputers.tcc virtualbox org.virt_manager.virt-manager \
     com.ranfdev.DistroShelf ros2 winboat cups system-config-printer hplip com.github.tchx84.Flatseal \
     com.mattjakeman.ExtensionManager org.gnome.tweaks waywallen
-folder Narzedzia "Narzędzia" org.kde.ark org.kde.kcalc io.github.vmkspv.lenspect io.github.gaheldev.Millisecond \
+folder Tools "Tools" org.kde.ark org.kde.kcalc io.github.vmkspv.lenspect io.github.gaheldev.Millisecond \
     io.gitlab.adhami3310.Impression stoken-gui
 dconf write /org/gnome/desktop/app-folders/folder-children "[${FOLDERS%, }]"
 
@@ -74,4 +74,4 @@ page="" pos=0
 for f in $(echo "$FOLDERS" | tr -d "'," ); do page="$page'$f': <{'position': <$pos>}>, "; pos=$((pos + 1)); done
 for a in $TOP; do page="$page'$a.desktop': <{'position': <$pos>}>, "; pos=$((pos + 1)); done
 gsettings set org.gnome.shell app-picker-layout "[{${page%, }}]"
-echo "Siatka aplikacji GNOME uporządkowana."
+echo "GNOME app grid organised."
