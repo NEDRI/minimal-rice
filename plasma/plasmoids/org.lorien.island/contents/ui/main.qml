@@ -501,8 +501,9 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: slot
 
-        // as wide as the closed island; open, it reaches over the empty spacers on either side
-        Layout.preferredWidth: 2 * Math.round(root.closedWidth / 2) + 2 * root.shapes.closed.shoulder
+        // as wide as the widest closed island (music and the timer's time) and never another width, so the
+        // panel never moves its middle; open, it reaches over the empty spacers on either side
+        Layout.preferredWidth: 400
         Layout.minimumWidth: Layout.preferredWidth
         Layout.fillHeight: true
 
@@ -620,6 +621,8 @@ PlasmoidItem {
     }
 
     property Item slotItem: null
+    // the part below the bar keeps under the bar's part, wherever the panel puts it
+    Timer { interval: 500; repeat: true; running: island.visible; onTriggered: island.place() }
 
     // ================================================================ the part below the bar
     PlasmaCore.Dialog {
