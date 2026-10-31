@@ -37,11 +37,11 @@ Item {
 
     Column {
         anchors { left: badge.right; leftMargin: 10; verticalCenter: badge.verticalCenter }
-        Text { id: title; text: comp.alert ? comp.alert.title : ""; color: "white"; font { family: isle.font; pixelSize: 14; weight: Font.DemiBold } }
-        Text { id: sub; text: comp.alert ? comp.alert.subtitle : ""; color: Qt.rgba(1, 1, 1, 0.5); font { family: isle.font; pixelSize: 12 } }
+        Text { renderType: Text.QtRendering; id: title; text: comp.alert ? comp.alert.title : ""; color: "white"; font { family: isle.font; pixelSize: 14; weight: Font.DemiBold } }
+        Text { renderType: Text.QtRendering; id: sub; text: comp.alert ? comp.alert.subtitle : ""; color: Qt.rgba(1, 1, 1, 0.5); font { family: isle.font; pixelSize: 12 } }
     }
 
-    Text {
+    Text { renderType: Text.QtRendering;
         id: value
         anchors { right: parent.right; rightMargin: 18; verticalCenter: badge.verticalCenter }
         // counts up with the ring, as Isle's

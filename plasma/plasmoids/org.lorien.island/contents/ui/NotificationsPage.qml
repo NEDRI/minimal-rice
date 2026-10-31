@@ -44,7 +44,7 @@ Item {
             Layout.rightMargin: 10
             Layout.bottomMargin: 6
             spacing: 6
-            Text {
+            Text { renderType: Text.QtRendering;
                 Layout.fillWidth: true
                 text: "Notifications"
                 color: Qt.rgba(1, 1, 1, 0.6)
@@ -64,7 +64,7 @@ Item {
                 implicitHeight: clearText.implicitHeight + 10
                 radius: height / 2
                 color: clearArea.pressed ? "#48484a" : clearArea.containsMouse ? "#3a3a3c" : "#2c2c2e"
-                Text {
+                Text { renderType: Text.QtRendering;
                     id: clearText
                     anchors.centerIn: parent
                     text: "Clear"
@@ -96,7 +96,7 @@ Item {
             visible: comp.dnd
             spacing: 6
             IsleIcon { name: "isle-moon"; size: 10; opacity: 130 / 255 }
-            Text {
+            Text { renderType: Text.QtRendering;
                 Layout.fillWidth: true
                 text: "Do Not Disturb: new ones wait here; urgent ones still show"
                 elide: Text.ElideRight
@@ -115,9 +115,9 @@ Item {
                 spacing: 4
                 IsleIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "isle-bell"; size: 24; opacity: 0.35 }
                 Item { width: 1; height: 4 }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "No notifications"; color: "white"
+                Text { renderType: Text.QtRendering; anchors.horizontalCenter: parent.horizontalCenter; text: "No notifications"; color: "white"
                        font { family: isle.font; pixelSize: 15; weight: Font.DemiBold; letterSpacing: -0.1 } }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "You’re all caught up"; color: Qt.rgba(1, 1, 1, 0.5)
+                Text { renderType: Text.QtRendering; anchors.horizontalCenter: parent.horizontalCenter; text: "You’re all caught up"; color: Qt.rgba(1, 1, 1, 0.5)
                        font { family: isle.font; pixelSize: 12 } }
             }
 
@@ -173,7 +173,7 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 8
-                                Text {
+                                Text { renderType: Text.QtRendering;
                                     Layout.maximumWidth: implicitWidth
                                     Layout.fillWidth: true
                                     text: (row.model.summary || row.model.applicationName || "").replace(/\s+/g, " ").trim()
@@ -181,7 +181,7 @@ Item {
                                     color: "white"
                                     font { family: isle.font; pixelSize: 13; weight: Font.DemiBold }
                                 }
-                                Text {
+                                Text { renderType: Text.QtRendering;
                                     Layout.fillWidth: true
                                     visible: text.length > 0
                                     text: (row.model.body || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()
@@ -203,7 +203,7 @@ Item {
                                         height: actionText.implicitHeight + 6
                                         radius: height / 2
                                         color: actionArea.containsMouse ? "#3a3a3c" : "#2c2c2e"
-                                        Text {
+                                        Text { renderType: Text.QtRendering;
                                             id: actionText
                                             anchors.centerIn: parent
                                             text: (row.model.actionLabels || [])[index] || modelData
@@ -228,7 +228,7 @@ Item {
                             Layout.alignment: row.actions.length ? Qt.AlignTop : Qt.AlignVCenter
                             implicitWidth: Math.max(time.implicitWidth, 18)
                             implicitHeight: Math.max(time.implicitHeight, 18)
-                            Text {
+                            Text { renderType: Text.QtRendering;
                                 id: time
                                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                                 leftPadding: 8

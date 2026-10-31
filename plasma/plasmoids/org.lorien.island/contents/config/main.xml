@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <!-- time in each app per day, as JSON: {"days": {"2026-10-31": {"firefox": 123456}}, "apps": {"firefox": ["Firefox", "firefox"]}};
+         isled keeps this for Isle in GNOME, but lets only GNOME Shell report to it -->
+    <entry name="appUsage" type="String">
+      <default>{}</default>
+    </entry>
+  </group>
+</kcfg>

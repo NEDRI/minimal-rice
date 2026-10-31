@@ -6,7 +6,7 @@ A dark, minimal look for **KDE Plasma 6** and **GNOME** on Arch (EndeavourOS, Ca
 
 **KDE Plasma**
 - Transparent top bar with "islands" (Panel Colorizer): CPU, RAM, network, battery and an audio visualizer.
-- Island: [Isle](https://github.com/zickrian/isle)'s notch for KDE, following Isle's own code and fed by its background service `isled`. Closed, it hangs from the top edge of the screen with the time, the album art and dancing bars, or the focus timer's ring. Rest the pointer on it (or click) and it springs open into Music, Focus and Calendar pages; charger and battery changes make it peek.
+- Island: [Isle](https://github.com/zickrian/isle)'s notch for KDE, following Isle's own code and fed by its background service `isled`. Closed, it hangs from the top edge of the screen with the time, the album art and dancing bars, or the focus timer's ring. Rest the pointer on it (or click) and it springs open into Isle's pages: Music (with synced lyrics and volume/outputs), Notifications (Plasma's history, Do Not Disturb), Focus, Reminders, Shelf (clipboard history via Klipper, and files to drag), Calendar and Apps (time per app); charger and battery changes make it peek.
 - Floating dock at the bottom.
 - Minimal desktop tiles in two columns along the screen edges:
   - weather, binary clock, now playing, Pokémon of the day, terminals;

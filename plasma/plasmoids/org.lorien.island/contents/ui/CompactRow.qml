@@ -33,12 +33,18 @@ Item {
         }
     }
 
-    Text {
+    // Do Not Disturb: a moon before the time
+    Row {
         anchors.centerIn: parent
-        text: Qt.formatTime(isle.now, "HH:mm")
-        color: "white"
-        font { family: isle.font; pixelSize: 15; weight: Font.DemiBold; letterSpacing: -0.1 }
-        font.features: { "tnum": 1 }
+        spacing: 6
+        IsleIcon { anchors.verticalCenter: parent.verticalCenter; visible: isle.dnd; name: "isle-moon"; size: 13; opacity: 0.85 }
+        Text { renderType: Text.QtRendering;
+            anchors.verticalCenter: parent.verticalCenter
+            text: Qt.formatTime(isle.now, "HH:mm")
+            color: "white"
+            font { family: isle.font; pixelSize: 15; weight: Font.DemiBold; letterSpacing: -0.1 }
+            font.features: { "tnum": 1 }
+        }
     }
 
     Row {
@@ -51,7 +57,7 @@ Item {
             barHeight: 14
             playing: isle.playing
         }
-        Text {
+        Text { renderType: Text.QtRendering;
             id: secondTime
             visible: comp.second
             anchors.verticalCenter: parent.verticalCenter

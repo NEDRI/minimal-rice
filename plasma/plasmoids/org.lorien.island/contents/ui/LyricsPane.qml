@@ -45,9 +45,9 @@ Item {
                    name: comp.stateShown && comp.stateShown.icon ? comp.stateShown.icon : ""; size: 22; opacity: 0.4 }
         PauseDots { anchors.horizontalCenter: parent.horizontalCenter; visible: !!(comp.stateShown && comp.stateShown.dots)
                     breathing: visible; dotColor: Qt.rgba(1, 1, 1, 0.6) }
-        Text { anchors.horizontalCenter: parent.horizontalCenter; text: comp.stateShown ? comp.stateShown.title : ""
+        Text { renderType: Text.QtRendering; anchors.horizontalCenter: parent.horizontalCenter; text: comp.stateShown ? comp.stateShown.title : ""
                color: Qt.rgba(1, 1, 1, 0.85); font { family: isle.font; pixelSize: 14; weight: Font.DemiBold } }
-        Text { anchors.horizontalCenter: parent.horizontalCenter; visible: text !== ""
+        Text { renderType: Text.QtRendering; anchors.horizontalCenter: parent.horizontalCenter; visible: text !== ""
                text: comp.stateShown && comp.stateShown.hint ? comp.stateShown.hint : ""
                color: Qt.rgba(1, 1, 1, 0.55); font { family: isle.font; pixelSize: 12 } }
     }
@@ -85,7 +85,7 @@ Item {
                     Behavior on opacity { NumberAnimation { duration: 380 } }
                     Behavior on scale { NumberAnimation { duration: 380 } }
 
-                    Text {
+                    Text { renderType: Text.QtRendering;
                         id: line
                         visible: !(comp.synced && !row.words)
                         width: parent.width

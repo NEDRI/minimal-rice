@@ -66,6 +66,20 @@ PlasmoidItem {
 
     readonly property var lyrics: isled.lyrics
     readonly property var tasks: isled.tasks
+    readonly property var clipboard: isled.clipboard
+    readonly property var shelf: isled.shelf
+    readonly property var events: isled.events
+    readonly property alias appUsage: appUsageTracker
+    AppUsage { id: appUsageTracker }
+    function copyText(text) { isled.copyText(text); }
+    // copies a clipboard card again and moves it to the front
+    function copyClip(item) {
+        if (item.kind === "files" && item.uris && item.uris.length)
+            isled.copyText(item.uris.join("\n"));
+        else
+            isled.copyText(item.preview || "");
+        isled.call("Clipboard1", "Touch", [item.id], "t");
+    }
 
     // Do Not Disturb is Plasma's own: until a date, here one far off (on until turned off)
     NotificationManager.Settings { id: notificationSettings }
@@ -378,7 +392,9 @@ PlasmoidItem {
                         NotificationsPage { isle: root; anchors.fill: parent; visible: root.page === "notifications" }
                         FocusPage { isle: root; anchors.fill: parent; visible: root.page === "focus" }
                         RemindersPage { isle: root; anchors.fill: parent; visible: root.page === "reminders" }
+                        ShelfPage { isle: root; anchors.fill: parent; visible: root.page === "shelf" }
                         CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
+                        AppsPage { isle: root; anchors.fill: parent; visible: root.page === "apps" }
                     }
                 }
             }

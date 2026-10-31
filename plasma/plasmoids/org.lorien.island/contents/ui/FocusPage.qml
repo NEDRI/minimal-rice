@@ -21,14 +21,14 @@ Item {
             color: isle.timerColor
             Column {
                 anchors.centerIn: parent
-                Text {
+                Text { renderType: Text.QtRendering;
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: isle.mmss(isle.timerRemainingMs / 1000)
                     color: "white"
                     font { family: isle.font; pixelSize: 24; weight: Font.DemiBold; letterSpacing: -0.5 }
                     font.features: { "tnum": 1 }
                 }
-                Text {
+                Text { renderType: Text.QtRendering;
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: ({ idle: "Focus", focus: "Focus", short_break: "Break", long_break: "Long break" })[comp.state.phase] || "Focus"
                     color: Qt.rgba(1, 1, 1, 0.55)
@@ -53,13 +53,13 @@ Item {
                         id: row
                         x: 12; anchors.verticalCenter: parent.verticalCenter
                         spacing: 4
-                        Text {
+                        Text { renderType: Text.QtRendering;
                             width: 40; anchors.verticalCenter: parent.verticalCenter
                             text: modelData.label
                             color: Qt.rgba(1, 1, 1, 0.55)
                             font { family: isle.font; pixelSize: 12; weight: Font.Medium }
                         }
-                        Text {
+                        Text { renderType: Text.QtRendering;
                             width: 32; anchors.verticalCenter: parent.verticalCenter
                             rightPadding: 6
                             horizontalAlignment: Text.AlignRight
@@ -104,7 +104,7 @@ Item {
                         spacing: 7
                         IsleIcon { anchors.verticalCenter: parent.verticalCenter; size: 13
                                    name: comp.state.running ? "isle-pause-symbolic" : "isle-play-symbolic" }
-                        Text {
+                        Text { renderType: Text.QtRendering;
                             anchors.verticalCenter: parent.verticalCenter
                             text: comp.state.running ? "Pause" : comp.idle ? "Start" : "Resume"
                             color: "white"

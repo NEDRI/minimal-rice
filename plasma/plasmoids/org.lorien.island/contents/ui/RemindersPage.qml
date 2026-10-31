@@ -19,13 +19,13 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 24
             spacing: 4
-            Text {
+            Text { renderType: Text.QtRendering;
                 Layout.fillWidth: true
                 text: "Reminders"
                 color: "#ff9f0a"
                 font { family: isle.font; pixelSize: 17; weight: Font.DemiBold; letterSpacing: -0.2 }
             }
-            Text {
+            Text { renderType: Text.QtRendering;
                 rightPadding: 2
                 text: comp.open.length
                 color: "#ff9f0a"
@@ -46,7 +46,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            Text {
+            Text { renderType: Text.QtRendering;
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 22 + 30
                 visible: comp.open.length === 0
@@ -109,7 +109,7 @@ Item {
                                 Item {
                                     Layout.fillWidth: true
                                     implicitHeight: Math.max(title.implicitHeight, field.implicitHeight) + 6
-                                    Text {
+                                    Text { renderType: Text.QtRendering;
                                         id: title
                                         y: 3
                                         width: parent.width
@@ -132,7 +132,7 @@ Item {
                                         width: row.ticked ? Math.min(title.contentWidth, parent.width) : 0
                                         Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
                                     }
-                                    TextInput {
+                                    TextInput { renderType: Text.QtRendering;
                                         id: field
                                         y: 3
                                         width: parent.width
@@ -201,12 +201,12 @@ Item {
                         border.width: 1.5
                         border.color: Qt.rgba(1, 1, 1, 0.14)
                     }
-                    TextInput {
+                    TextInput { renderType: Text.QtRendering;
                         id: field
                         Layout.fillWidth: true
                         color: "white"
                         font { family: isle.font; pixelSize: 14; letterSpacing: -0.1 }
-                        Text {
+                        Text { renderType: Text.QtRendering;
                             visible: !parent.text && !parent.activeFocus || !parent.text
                             text: "New reminder"
                             color: Qt.rgba(1, 1, 1, 0.45)

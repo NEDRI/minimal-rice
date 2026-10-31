@@ -16,6 +16,9 @@ Item {
     readonly property var pomodoroConfig: parse(pomodoroProps.properties.Config)
     readonly property var system: parse(systemProps.properties.State)
     readonly property var tasks: parse(todo.properties.Items)
+    readonly property var clipboard: parse(clipboardProps.properties.Items)
+    readonly property var shelf: parse(shelfProps.properties.Items)
+    readonly property var events: parse(calendarProps.properties.Events)
 
     signal systemEvent(var event)
     signal phaseFinished(string finished, string next)
@@ -53,6 +56,37 @@ Item {
     Props { id: pomodoroProps; iface: "io.github.zickrian.isle.Pomodoro1" }
     Props { id: systemProps; iface: "io.github.zickrian.isle.System1" }
     Props { id: todo; iface: "io.github.zickrian.isle.Todo1" }
+    Props { id: clipboardProps; iface: "io.github.zickrian.isle.Clipboard1" }
+    Props { id: shelfProps; iface: "io.github.zickrian.isle.Shelf1" }
+    Props { id: calendarProps; iface: "io.github.zickrian.isle.Calendar1" }
+
+    // In GNOME Isle's extension hands isled what is copied; in KDE Klipper says when it changes.
+    property string lastCopied: ""
+    function copyText(text) {
+        lastCopied = text;
+        DBus.SessionBus.asyncCall({ service: "org.kde.klipper", path: "/klipper", iface: "org.kde.klipper.klipper",
+            member: "setClipboardContents", arguments: [text], signature: "(s)" });
+    }
+    DBus.SignalWatcher {
+        busType: DBus.BusType.Session
+        service: "org.kde.klipper"
+        path: "/klipper"
+        iface: "org.kde.klipper.klipper"
+        function dbusClipboardHistoryUpdated() {
+            const reply = DBus.SessionBus.asyncCall({ service: "org.kde.klipper", path: "/klipper",
+                iface: "org.kde.klipper.klipper", member: "getClipboardContents", arguments: [], signature: "" });
+            reply.finished.connect(() => {
+                if (reply.isError || !reply.values.length)
+                    return;
+                const v = reply.values[0];
+                const text = String(v && v.value !== undefined ? v.value : v);
+                if (!text.trim() || text === daemon.lastCopied)
+                    return;
+                daemon.lastCopied = text;
+                daemon.call("Clipboard1", "AddText", [text, ""], "ss");
+            });
+        }
+    }
 
     DBus.SignalWatcher {
         busType: DBus.BusType.Session
@@ -71,7 +105,7 @@ Item {
 
     // isled (re)started: read everything again, and ask for lyrics (Isle's lyrics-online, on by default)
     onRunningChanged: if (running) {
-        media.updateAll(); pomodoroProps.updateAll(); systemProps.updateAll(); todo.updateAll();
+        media.updateAll(); pomodoroProps.updateAll(); systemProps.updateAll(); todo.updateAll(); clipboardProps.updateAll(); shelfProps.updateAll(); calendarProps.updateAll();
         call("Media1", "SetLyrics", [true], "b");
     }
     Component.onCompleted: if (running) call("Media1", "SetLyrics", [true], "b")

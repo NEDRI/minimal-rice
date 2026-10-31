@@ -21,14 +21,14 @@ Item {
         property int artistSize: 13
         property real artistOpacity: 0.55
         spacing: 1
-        Text {
+        Text { renderType: Text.QtRendering;
             Layout.fillWidth: true
             text: comp.np ? comp.np.title : ""
             elide: Text.ElideRight
             color: "white"
             font { family: isle.font; pixelSize: parent.titleSize; weight: parent.titleWeight; letterSpacing: -0.2 }
         }
-        Text {
+        Text { renderType: Text.QtRendering;
             Layout.fillWidth: true
             text: comp.np ? (comp.np.artist || comp.np.identity || "") : ""
             elide: Text.ElideRight
@@ -38,7 +38,7 @@ Item {
     }
     component Progress: RowLayout {
         spacing: 10
-        Text {
+        Text { renderType: Text.QtRendering;
             Layout.minimumWidth: 34
             text: isle.mmss(isle.positionMs / 1000)
             color: Qt.rgba(1, 1, 1, 0.6)
@@ -53,7 +53,7 @@ Item {
                     isle.daemon.call("Media1", "SetPosition", [Math.round(fraction * comp.np.length_us)], "x");
             }
         }
-        Text {
+        Text { renderType: Text.QtRendering;
             Layout.minimumWidth: 34
             horizontalAlignment: Text.AlignRight
             text: "−" + isle.mmss(Math.max(0, isle.lengthMs - isle.positionMs) / 1000)
@@ -90,13 +90,13 @@ Item {
         spacing: 4
         IsleIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "isle-music"; size: 28; opacity: 0.35 }
         Item { width: 1; height: 4 }
-        Text {
+        Text { renderType: Text.QtRendering;
             anchors.horizontalCenter: parent.horizontalCenter
             text: "Nothing playing"
             color: "white"
             font { family: isle.font; pixelSize: 15; weight: Font.DemiBold; letterSpacing: -0.1 }
         }
-        Text {
+        Text { renderType: Text.QtRendering;
             anchors.horizontalCenter: parent.horizontalCenter
             text: "Play something in Spotify or on YouTube"
             color: Qt.rgba(1, 1, 1, 0.5)
@@ -201,7 +201,7 @@ Item {
                 value: comp.sink && !comp.sink.muted ? Math.min(1, comp.volume) : 0
                 onReleased: fraction => { if (comp.sink) { comp.sink.muted = false; comp.sink.volume = Math.round(fraction * 65536); } }
             }
-            Text {
+            Text { renderType: Text.QtRendering;
                 Layout.minimumWidth: 46
                 horizontalAlignment: Text.AlignRight
                 text: !comp.sink ? "" : comp.sink.muted ? "Muted" : Math.round(comp.volume * 100) + "%"
@@ -230,7 +230,7 @@ Item {
                     anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 12; rightMargin: 12 }
                     spacing: 12
                     IsleIcon { name: "isle-speaker-device-symbolic"; size: 18 }
-                    Text {
+                    Text { renderType: Text.QtRendering;
                         Layout.fillWidth: true
                         text: output.model.Description
                         elide: Text.ElideRight

@@ -11,7 +11,9 @@ Item {
         { id: "notifications", icon: "isle-bell", label: "Notifications" },
         { id: "focus", icon: "isle-timer", label: "Focus" },
         { id: "reminders", icon: "isle-tasks", label: "Reminders" },
+        { id: "shelf", icon: "isle-shelf", label: "Shelf" },
         { id: "calendar", icon: "isle-calendar", label: "Calendar" },
+        { id: "apps", icon: "isle-apps", label: "Apps" },
     ]
 
     Row {
@@ -45,7 +47,7 @@ Item {
                     width: tab.open ? name.implicitWidth + 6 : 0
                     clip: true
                     Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                    Text {
+                    Text { renderType: Text.QtRendering;
                         id: name
                         x: 6
                         text: modelData.label
@@ -83,13 +85,13 @@ Item {
                 progress: isle.timerProgress
                 color: isle.timerColor
             }
-            Text {
+            Text { renderType: Text.QtRendering;
                 anchors.verticalCenter: parent.verticalCenter
                 text: Qt.formatDate(isle.now, "ddd d MMM")
                 color: Qt.rgba(1, 1, 1, 0.9)
                 font { family: isle.font; pixelSize: 13 }
             }
-            Text {
+            Text { renderType: Text.QtRendering;
                 anchors.verticalCenter: parent.verticalCenter
                 text: Qt.formatTime(isle.now, "HH:mm")
                 color: "white"
