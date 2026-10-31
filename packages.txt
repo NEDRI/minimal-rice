@@ -5,4 +5,4 @@ ttf-jetbrains-mono-nerd konsole btop cava fastfetch pacman-contrib flatpak fwupd
 # KDE: window borders (KDE Rounded Corners) built from source
 kwin qt6-tools vulkan-headers kdecoration plasma5support kscreen spectacle
 # GNOME
-gnome-shell gnome-menus gnome-shell-extension-appindicator gnome-shell-extension-vitals adw-gtk-theme qt6-wayland
+inter-font gnome-shell gnome-menus gnome-shell-extension-appindicator gnome-shell-extension-vitals adw-gtk-theme qt6-wayland

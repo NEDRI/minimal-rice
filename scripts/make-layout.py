@@ -136,11 +136,14 @@ layout = {
         ["org.dhruv8sh.kara", {"general": {"spacing": 4, "type": 0}}],
         ["org.kde.plasma.appmenu", {}],
         ["org.kde.plasma.panelspacer", {}],
+        # the island (org.lorien.island, after Isle for GNOME) in the middle; it hangs from the
+        # screen edge when opened, and Panel Colorizer leaves it without a background of its own
+        ["org.lorien.island", {}],
+        ["org.kde.plasma.panelspacer", {}],
         ["luisbocanegra.audio.visualizer", {"General": {
             "visualizerStyle": 0, "barCount": 32, "barWidth": 3, "barGap": 2, "roundedBars": True,
             "length": 170, "noiseReduction": 77, "hideToolTip": True,
             "barColors": json.dumps({"enabled": True, "sourceType": 1, "systemColor": "highlightColor", "systemColorSet": "View"})}}],
-        ["org.kde.plasma.panelspacer", {}],
         ["org.kde.plasma.systemtray", {"General": {"iconSpacing": 1}}],
         ["org.kde.plasma.lock_logout", {"General": {
             "show_lockScreen": True, "show_requestReboot": True, "show_requestShutDown": True,
@@ -250,9 +253,14 @@ for where, cfg in colorizer_cfg.items():
 var cfg = %s;
 panels().forEach(function (p) {
     if (p.location !== "%s") return;
+    // no colorizer background behind the island: it draws its own black shape
+    var skip = p.widgets("org.lorien.island").map(function (w) {
+        return {id: w.id, name: "org.lorien.island", blacklisted: true};
+    });
     p.widgets("luisbocanegra.panel.colorizer").forEach(function (w) {
         w.currentConfigGroup = ["General"];
         for (var k in cfg.General) w.writeConfig(k, cfg.General[k]);
+        w.writeConfig("blacklistedWidgets", JSON.stringify({widgets: skip}));
         w.reloadConfig();
     });
 });

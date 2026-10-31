@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Category": "Multimedia",
+        "Description": "A notch-style island in the top bar after Isle for GNOME: music, a focus timer, a calendar and charging peeks",
+        "Icon": "media-album-cover",
+        "Id": "org.lorien.island",
+        "License": "GPL-3.0+",
+        "Name": "Island",
+        "Version": "1.0"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
