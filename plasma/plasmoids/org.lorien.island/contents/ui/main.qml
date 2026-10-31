@@ -12,6 +12,9 @@ import QtQuick.Window
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.workspace.dbus as DBus
+import org.kde.plasma.private.volume as Vol
+import org.kde.plasma.private.keyboardindicator as KeyboardIndicator
 import org.kde.notificationmanager as NotificationManager
 
 PlasmoidItem {
@@ -137,7 +140,7 @@ PlasmoidItem {
     onHoveredChanged: {
         if (hovered) {
             collapseTimer.stop();
-            if (mode !== "open")
+            if (mode !== "open" && !alertHoldsHover)
                 expandTimer.restart();
         } else {
             expandTimer.stop();
@@ -148,7 +151,7 @@ PlasmoidItem {
     Timer { id: expandTimer; interval: root.hoverDelay; onTriggered: if (root.hovered) root.open() }
     Timer { id: collapseTimer; interval: root.collapseDelay; onTriggered: if (!root.hovered) root.close() }
 
-    // ---- alerts, as Isle's alerts.js `system` ----
+    // ---- alerts, as Isle's alerts.js: one at a time, the newest replacing the one shown ----
     Timer {
         id: alertTimer
         onTriggered: {
@@ -163,37 +166,274 @@ PlasmoidItem {
         if (mode !== "open")
             mode = "peek";
     }
+    function dismissAlert() {
+        alertTimer.stop();
+        if (mode === "peek")
+            mode = "closed";
+    }
+    // a click on an alert: what it is about (a notification opens), else its page
+    function activateAlert() {
+        const a = alert;
+        dismissAlert();
+        if (a && a.onActivate)
+            a.onActivate();
+        else if (a && a.page)
+            open(a.page);
+    }
+    // an alert with buttons or a ×: the pointer goes there to press them, not to open the island
+    readonly property bool alertHoldsHover: mode === "peek" && !!alert && (!!alert.closable || !!(alert.actions && alert.actions.length))
+
     Connections {
         target: isled
         function onSystemEvent(e) {
             const pct = Math.round(e.percent || 0) + "%";
             if (e.kind === "power")
-                root.showAlert({ icon: e.plugged ? "isle-bolt" : e.percent <= 20 ? "isle-battery-low-symbolic" : "isle-battery-symbolic",
-                    ring: e.percent / 100, title: e.plugged ? "Charging" : "On battery",
+                root.showAlert({ key: "power", icon: e.plugged ? "isle-bolt" : e.percent <= 20 ? "isle-battery-low-symbolic" : "isle-battery-symbolic",
+                    ring: e.percent / 100, ringIconSize: e.plugged ? 12 : 14, title: e.plugged ? "Charging" : "On battery",
                     subtitle: e.plugged ? "Charger connected" : "Charger disconnected", value: pct,
                     tone: e.plugged ? "good" : e.percent <= 20 ? "bad" : "neutral", duration: 2600 });
             else if (e.kind === "battery_low")
-                root.showAlert({ icon: "isle-battery-low-symbolic", ring: e.percent / 100, title: "Low battery",
+                root.showAlert({ key: "power", icon: "isle-battery-low-symbolic", ring: e.percent / 100, ringIconSize: 14, title: "Low battery",
                     subtitle: "Plug in your charger soon", value: pct, tone: "bad", duration: 8000 });
             else if (e.kind === "battery_full")
-                root.showAlert({ icon: "isle-bolt", ring: 1, title: "Fully charged",
+                root.showAlert({ key: "power", icon: "isle-bolt", ring: 1, title: "Fully charged",
                     subtitle: "You can unplug your charger", value: "100%", tone: "good", duration: 2600 });
             else if (e.kind === "network" && !e.connected)
-                root.showAlert({ icon: "isle-wifi-off-symbolic", title: "Offline",
+                root.showAlert({ key: "network", icon: "isle-wifi-off-symbolic", title: "Offline",
                     subtitle: "The network connection was lost", tone: "bad", duration: 2600 });
+            else if (e.kind === "bluetooth" && e.device) {
+                const battery = e.connected && e.device.battery !== undefined && e.device.battery !== null ? e.device.battery : null;
+                root.showAlert({ key: "bluetooth:" + e.device.path, icon: "isle-bluetooth-symbolic",
+                    ring: battery !== null ? battery / 100 : null, title: e.device.name,
+                    subtitle: e.connected ? "Connected" : "Disconnected", value: battery !== null ? Math.round(battery) + "%" : "",
+                    tone: !e.connected ? "neutral" : battery !== null && battery < 20 ? "bad" : "good", duration: 2600 });
+            }
         }
+        // a phase ended; when the next one waits to be started, a button starts it
         function onPhaseFinished(finished, next) {
-            const pause = next === "short_break" || next === "long_break";
-            root.showAlert({ icon: "isle-timer-symbolic", title: pause ? "Time for a break" : "Back to focus",
-                subtitle: pause ? "Focus session done" : "Break is over", tone: pause ? "good" : "neutral", duration: 8000 });
+            const state = root.pomodoro;
+            const waiting = !state || !state.running;
+            const minutes = state ? Math.round(state.duration_ms / 60000) : 0;
+            const start = { label: finished === "focus" ? "Start break" : "Start focus", callback: () => { isled.call("Pomodoro1", "Start"); root.dismissAlert(); } };
+            if (finished === "focus")
+                root.showAlert({ key: "pomodoro", icon: "isle-timer-symbolic", title: "Focus session done",
+                    subtitle: waiting ? "Take a break when you’re ready" : "Enjoy a " + minutes + "-minute break",
+                    tone: "good", actions: waiting ? [start] : [], duration: 8000, page: "focus" });
+            else
+                root.showAlert({ key: "pomodoro", icon: "isle-timer-symbolic",
+                    title: next === "focus" ? "Break is over" : next === "long_break" ? "Long break" : "Break",
+                    subtitle: waiting ? "Ready for another focus session?" : minutes + " minutes of focus",
+                    tone: "focus", actions: waiting ? [start] : [], duration: 8000, page: "focus" });
         }
+    }
+
+    // ---- Plasma's on-screen displays (volume, brightness, toggles) come to the island instead ----
+    readonly property var osdKinds: [
+        ["audio-volume", "Volume"], ["microphone-sensitivity-muted", "Microphone", "Muted"], ["microphone", "Microphone"],
+        ["input-keyboard-brightness", "Keyboard light"], ["keyboard-brightness", "Keyboard light"],
+        ["video-display-brightness", "Brightness"], ["display-brightness", "Brightness"],
+        ["input-touchpad-off", "Touchpad", "Off"], ["touchpad-disabled", "Touchpad", "Off"], ["input-touchpad", "Touchpad", "On"],
+        ["airplane-mode-disabled", "Airplane mode", "Off"], ["airplane-mode", "Airplane mode", "On"],
+        ["network-wireless-off", "Wi-Fi", "Off"], ["network-wireless-disabled", "Wi-Fi", "Off"], ["network-wireless", "Wi-Fi", "On"],
+        ["preferences-system-bluetooth-inactive", "Bluetooth", "Off"], ["bluetooth-disabled", "Bluetooth", "Off"],
+        ["preferences-system-bluetooth", "Bluetooth", "On"], ["bluetooth", "Bluetooth", "On"],
+    ]
+    function osdAlert(icon, text, percent, max) {
+        const found = osdKinds.find(k => icon.startsWith(k[0]));
+        const kind = found ? found[1] : "";
+        const hasLevel = percent !== undefined && percent !== null;
+        // KDE says "Touchpad On": the kind as the title, the state as a pill
+        const onOff = /^(.*)\s+(On|Off)$/.exec(text || "");
+        const level = hasLevel ? percent / (max || 100) : null;
+        const muted = icon.indexOf("muted") >= 0;
+        const sinkName = kind === "Volume" && osdSink.sink ? osdSink.sink.description : "";
+        const volumeIcon = muted || level === 0 ? "isle-speaker-off-symbolic" : level < 0.34 ? "isle-speaker-1-symbolic"
+            : level < 0.67 ? "isle-speaker-2-symbolic" : "isle-speaker-3-symbolic";
+        showAlert({ key: "osd",
+            icon: kind === "Volume" ? volumeIcon : kind === "Brightness" ? "isle-sun-symbolic" : kind === "Keyboard light" ? "isle-keyboard-symbolic"
+                : kind === "Touchpad" ? (found[2] === "Off" ? "isle-touchpad-off-symbolic" : "isle-touchpad-symbolic")
+                : kind === "Wi-Fi" ? (found[2] === "Off" ? "isle-wifi-off-symbolic" : "isle-wifi-symbolic")
+                : kind === "Bluetooth" ? (found[2] === "Off" ? "isle-bluetooth-off-symbolic" : "isle-bluetooth-symbolic")
+                : kind === "Airplane mode" ? "isle-airplane-symbolic" : kind === "Microphone" ? (muted ? "isle-mic-off-symbolic" : "isle-mic-symbolic")
+                : icon,
+            title: kind || (onOff ? onOff[1] : text) || icon,
+            subtitle: hasLevel ? (kind === "Volume" ? (muted ? "Muted" : sinkName) : kind === "Brightness" ? "Built-in Display"
+                : kind === "Keyboard light" ? "Keyboard" : (text || "")) : "",
+            status: hasLevel ? "" : (found && found[2]) || (onOff ? onOff[2] : ""),
+            level: hasLevel ? Math.min(1, level) : null,
+            levelText: hasLevel ? Math.round(percent) + "%" : "",
+            tone: "neutral", duration: 1500 });
+        // Plasma shows its own OSD for the same change: put it away once it is up
+        osdHide.restart();
+    }
+    Timer {
+        id: osdHide
+        interval: 60
+        property int round: 0
+        onTriggered: {
+            DBus.SessionBus.asyncCall({ service: "org.kde.plasmashell", path: "/org/kde/osdService", iface: "org.kde.osdService",
+                member: "hide", arguments: [], signature: "" });
+            if (++round < 3)
+                restart();
+            else
+                round = 0;
+        }
+    }
+
+    // Plasma does not hear its own OSD signals, and the island lives inside Plasma: the island watches what
+    // the OSDs are about itself. Volume and microphone from PulseAudio, brightness from powerdevil.
+    QtObject { id: osdSink; readonly property var sink: Vol.PreferredDevice.sink; readonly property var source: Vol.PreferredDevice.source }
+    property var watchedSink: null
+    property bool osdReady: false
+    Timer { interval: 3000; running: true; onTriggered: { root.watchedSink = osdSink.sink; root.osdReady = true; } }
+    Connections {
+        target: osdSink.sink
+        ignoreUnknownSignals: true
+        function onVolumeChanged() { root.volumeOsd(); }
+        function onMutedChanged() { root.volumeOsd(); }
+    }
+    function volumeOsd() {
+        const sink = osdSink.sink;
+        if (!osdReady || !sink || sink !== watchedSink) {
+            watchedSink = sink;     // another output: no alert for the switch itself
+            return;
+        }
+        osdAlert(sink.muted ? "audio-volume-muted" : "audio-volume-high", "", Math.round(sink.volume / 65536 * 100), 100);
+    }
+    Connections {
+        target: osdSink.source
+        ignoreUnknownSignals: true
+        function onMutedChanged() {
+            if (root.osdReady && osdSink.source)
+                root.osdAlert(osdSink.source.muted ? "microphone-sensitivity-muted" : "microphone-sensitivity-high",
+                    osdSink.source.muted ? "Microphone Off" : "Microphone On", null, null);
+        }
+    }
+    DBus.SignalWatcher {
+        busType: DBus.BusType.Session
+        service: "org.kde.ScreenBrightness"
+        path: "/org/kde/ScreenBrightness"
+        iface: "org.kde.ScreenBrightness"
+        function dbusBrightnessChanged(display, brightness) {
+            const b = Number(brightness.value ?? brightness);
+            const reply = DBus.SessionBus.asyncCall({ service: "org.kde.ScreenBrightness", path: "/org/kde/ScreenBrightness/" + String(display.value ?? display),
+                iface: "org.freedesktop.DBus.Properties", member: "Get", arguments: ["org.kde.ScreenBrightness.Display", "MaxBrightness"], signature: "(ss)" });
+            reply.finished.connect(() => {
+                const v = reply.values[0];
+                const max = Number(v && v.value !== undefined ? (v.value.value ?? v.value) : v) || 100;
+                root.osdAlert("display-brightness", "", Math.round(b / max * 100), 100);
+            });
+        }
+    }
+    DBus.SignalWatcher {
+        busType: DBus.BusType.Session
+        service: "org.kde.Solid.PowerManagement"
+        path: "/org/kde/Solid/PowerManagement/Actions/KeyboardBrightnessControl"
+        iface: "org.kde.Solid.PowerManagement.Actions.KeyboardBrightnessControl"
+        function dbusKeyboardBrightnessChanged(value) {
+            const v = Number(value.value ?? value);
+            const reply = DBus.SessionBus.asyncCall({ service: "org.kde.Solid.PowerManagement",
+                path: "/org/kde/Solid/PowerManagement/Actions/KeyboardBrightnessControl",
+                iface: "org.kde.Solid.PowerManagement.Actions.KeyboardBrightnessControl", member: "keyboardBrightnessMax", arguments: [], signature: "" });
+            reply.finished.connect(() => {
+                const m = reply.values[0];
+                const max = Number(m && m.value !== undefined ? m.value : m) || 1;
+                root.osdAlert("keyboard-brightness", "", Math.round(v / max * 100), 100);
+            });
+        }
+    }
+
+    // ---- Caps Lock: it rises only when turned on ----
+    KeyboardIndicator.KeyState {
+        id: capsLock
+        key: Qt.Key_CapsLock
+        property bool ready: false
+        onLockedChanged: if (ready) root.showAlert({ key: "keyboard", icon: "isle-capslock-symbolic", title: "Caps Lock",
+            status: locked ? "On" : "Off", tone: "neutral", duration: 1500 })
+        Component.onCompleted: Qt.callLater(() => ready = true)
+    }
+
+    // ---- a new song that starts playing peeks in: its cover, with the player's icon ----
+    property string lastTrack: ""
+    readonly property string trackKey: hasTrack ? nowPlaying.title + "\u001f" + nowPlaying.artist : ""
+    onTrackKeyChanged: {
+        const changed = trackKey !== lastTrack;
+        const first = lastTrack === "" && !trackStarted;
+        lastTrack = trackKey;
+        trackStarted = true;
+        if (changed && trackKey && playing && !first && !dnd && !(mode === "open" && page === "music"))
+            showAlert({ key: "track", art: nowPlaying.art_path, artBadge: nowPlaying.desktop_entry || "",
+                title: nowPlaying.title, subtitle: nowPlaying.artist || nowPlaying.identity, duration: 2600, page: "music" });
+    }
+    property bool trackStarted: false
+
+    // ---- notifications pop up in the island instead of Plasma's banners (Isle's gnome-banners: off) ----
+    NotificationManager.Notifications {
+        id: popups
+        showExpired: false
+        showDismissed: false
+        showJobs: false
+        groupMode: NotificationManager.Notifications.GroupDisabled
+        sortMode: NotificationManager.Notifications.SortByDate
+        sortOrder: Qt.DescendingOrder
+        property bool ready: false
+        onRowsInserted: (parent, first, last) => {
+            if (!ready)
+                return;
+            for (let i = first; i <= last; i++)
+                root.notificationAlert(index(i, 0));
+        }
+        Component.onCompleted: Qt.callLater(() => ready = true)
+    }
+    // the same list with the expired ones, to act on a notification after its banner was put away
+    NotificationManager.Notifications {
+        id: allNotifications
+        showExpired: true
+        showDismissed: true
+        showJobs: false
+        groupMode: NotificationManager.Notifications.GroupDisabled
+    }
+    function findNotification(id) {
+        for (let i = 0; i < allNotifications.count; i++) {
+            const idx = allNotifications.index(i, 0);
+            if (allNotifications.data(idx, NotificationManager.Notifications.IdRole) === id)
+                return idx;
+        }
+        return null;
+    }
+    function notificationAlert(idx) {
+        const N = NotificationManager.Notifications;
+        if (popups.data(idx, N.TypeRole) !== N.NotificationType)
+            return;
+        const urgent = popups.data(idx, N.UrgencyRole) === N.CriticalUrgency;
+        if (dnd && !urgent)
+            return;
+        const id = popups.data(idx, N.IdRole);
+        const names = popups.data(idx, N.ActionNamesRole) || [];
+        const labels = popups.data(idx, N.ActionLabelsRole) || [];
+        const image = popups.data(idx, N.ImageRole);
+        const body = String(popups.data(idx, N.BodyRole) || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+        const act = name => () => { const i = findNotification(id); if (i) allNotifications.invokeAction(i, name, N.Close); root.dismissAlert(); };
+        const buttons = names.slice(0, 3).map((name, k) => ({ label: labels[k] || name, primary: k === Math.min(names.length, 3) - 1, callback: act(name) }));
+        const appIcon = popups.data(idx, N.ApplicationIconNameRole) || popups.data(idx, N.IconNameRole) || "dialog-information";
+        const title = String(popups.data(idx, Qt.DisplayRole) || popups.data(idx, N.ApplicationNameRole) || "").replace(/\s+/g, " ").trim();
+        const transient = !!popups.data(idx, N.TransientRole);
+        // its banner from Plasma goes; the notification stays in the list (read everything first: it leaves this model)
+        popups.expire(idx);
+        showAlert({ key: "notification:" + id, kind: "notification", closable: true,
+            appIcon: appIcon, title: title,
+            subtitle: body, subtitleLines: 2,
+            actions: buttons, tone: urgent ? "bad" : "neutral",
+            duration: urgent ? 20000 : transient ? 2500 : 4000, page: "notifications",
+            onActivate: () => { const i = findNotification(id); if (i && allNotifications.data(i, N.HasDefaultActionRole))
+                allNotifications.invokeDefaultAction(i, N.Close); else root.open("notifications"); } });
     }
 
     // ---- the springs: Isle's island spring (~3.5 % overshoot) for size, a gentler one for the corners ----
     readonly property var target: mode === "open"
         ? { width: openWidth, height: barHeight + pageHeight + bottomPadding, radius: shapes.open.radius, shoulder: shapes.open.shoulder }
         : mode === "peek"
-        ? { width: 2 * Math.round(Math.max(peekMeasure.preferredWidth, closedWidth) / 2), height: peekHeight, radius: shapes.peek.radius, shoulder: shapes.peek.shoulder }
+        ? { width: 2 * Math.round(Math.max(peekMeasure.preferredWidth, closedWidth) / 2), height: peekMeasure.preferredHeight, radius: shapes.peek.radius, shoulder: shapes.peek.shoulder }
         : { width: 2 * Math.round(closedWidth / 2), height: barHeight, radius: shapes.closed.radius, shoulder: shapes.closed.shoulder }
     Item {
         visible: false
@@ -267,6 +507,8 @@ PlasmoidItem {
                     onClicked: mouse => {
                         if (mouse.button === Qt.MiddleButton && root.hasTrack)
                             isled.call("Media1", "PlayPause");
+                        else if (root.mode === "peek")
+                            root.activateAlert();
                         else
                             root.mode === "open" ? root.close() : root.open();
                     }
@@ -296,7 +538,8 @@ PlasmoidItem {
                     alert: root.alert
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: root.target.width
-                    height: root.peekHeight
+                    height: peekMeasure.preferredHeight
+                    onCloseRequested: root.dismissAlert()
                     opacity: root.mode === "peek" ? 1 : 0
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
@@ -365,7 +608,8 @@ PlasmoidItem {
                     clip: true
 
                     HoverHandler { id: islandHover }
-                    MouseArea { anchors.fill: parent }   // clicks on the island stay on it
+                    // clicks on the island stay on it; on an alert they open what it is about
+                    MouseArea { anchors.fill: parent; onClicked: if (root.mode === "peek") root.activateAlert() }
 
                     Peek {
                         isle: root
@@ -373,7 +617,8 @@ PlasmoidItem {
                         y: -root.barHeight
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.target.width
-                        height: root.peekHeight
+                        height: peekMeasure.preferredHeight
+                    onCloseRequested: root.dismissAlert()
                         opacity: root.mode === "peek" ? 1 : 0
                         visible: opacity > 0
                         Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
