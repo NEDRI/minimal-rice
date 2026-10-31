@@ -661,7 +661,7 @@ PlasmoidItem {
                     height: root.barHeight
                     opacity: root.mode === "closed" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "closed" ? 320 : 160 } }
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "closed" ? 120 : 0 } NumberAnimation { duration: root.mode === "closed" ? 320 : 160 } } }
                 }
                 // .isle-header: 0 24 px 0 28 px
                 Header {
@@ -671,7 +671,7 @@ PlasmoidItem {
                     height: root.barHeight
                     opacity: root.mode === "open" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "open" ? 120 : 0 } NumberAnimation { duration: root.mode === "open" ? 320 : 160 } } }
                 }
                 // the assistant's header: its name, and a new chat
                 Item {
@@ -680,7 +680,7 @@ PlasmoidItem {
                     height: root.barHeight
                     opacity: root.mode === "assistant" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } }
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "assistant" ? 120 : 0 } NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } } }
                     Row {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 6
@@ -706,7 +706,7 @@ PlasmoidItem {
                     onCloseRequested: root.dismissAlert()
                     opacity: root.mode === "peek" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "peek" ? 120 : 0 } NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } } }
                 }
 
                 // the open page under the header (.isle-page: 6 px 28 px 0)
@@ -716,7 +716,7 @@ PlasmoidItem {
                     height: root.pageHeight - 6
                     opacity: root.mode === "open" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "open" ? 120 : 0 } NumberAnimation { duration: root.mode === "open" ? 320 : 160 } } }
 
                     MusicPage { isle: root; anchors.fill: parent; visible: root.page === "music" }
                     NotificationsPage { isle: root; anchors.fill: parent; visible: root.page === "notifications" }
@@ -738,7 +738,7 @@ PlasmoidItem {
                     height: contentHeight
                     opacity: root.mode === "assistant" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } }
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "assistant" ? 120 : 0 } NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } } }
                 }
             }
         }
