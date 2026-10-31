@@ -12,6 +12,7 @@ import QtQuick.Window
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.workspace.dbus as DBus
 import org.kde.plasma.private.volume as Vol
 import org.kde.plasma.private.keyboardindicator as KeyboardIndicator
@@ -252,6 +253,22 @@ PlasmoidItem {
         }
     }
 
+    // ---- Usage: isled reads Claude Code's sign-in, which lasts 8 hours; `claude auth status` renews it
+    // without using the plan, then isled is asked again ----
+    property real usageRenewedAt: 0
+    onUsageChanged: {
+        const stale = usage && usage.providers && usage.providers.some(p => (p.note || "").indexOf("refresh its sign-in") >= 0);
+        if (stale && Date.now() - usageRenewedAt > 10 * 60000) {
+            usageRenewedAt = Date.now();
+            renewSignIn.connectSource("\"$HOME/.local/bin/claude\" auth status >/dev/null 2>&1; echo renewed");
+        }
+    }
+    Plasma5Support.DataSource {
+        id: renewSignIn
+        engine: "executable"
+        onNewData: (source) => { disconnectSource(source); isled.call("Usage1", "Refresh"); }
+    }
+
     // ---- Plasma's on-screen displays (volume, brightness, toggles) come to the island instead ----
     readonly property var osdKinds: [
         ["audio-volume", "Volume"], ["microphone-sensitivity-muted", "Microphone", "Muted"], ["microphone", "Microphone"],
@@ -468,8 +485,9 @@ PlasmoidItem {
         Spring { id: springH; target: root.target.height }
         Spring { id: springR; damping: 25; target: root.target.radius }
         Spring { id: springS; damping: 25; target: root.target.shoulder }
-        Peek { id: peekMeasure; isle: root; alert: root.alert }   // only measured
     }
+    // a copy of the alert that is only measured: laid out (so its words wrap) but never seen
+    Peek { id: peekMeasure; isle: root; alert: root.alert; opacity: 0; enabled: false; width: root.mode === "peek" ? root.target.width : 380; height: 1 }
     FrameAnimation {
         running: !(springW.settled && springH.settled && springR.settled && springS.settled)
         onTriggered: { springW.step(frameTime); springH.step(frameTime); springR.step(frameTime); springS.step(frameTime); }
@@ -495,6 +513,7 @@ PlasmoidItem {
         readonly property real winHeight: Math.min(Window.height > 0 ? Window.height : height, 36)
         function measure() { winTop = -mapToItem(null, 0, 0).y; }
         onYChanged: Qt.callLater(measure)
+        Timer { interval: 2000; running: true; repeat: true; onTriggered: slot.measure() }
         onHeightChanged: Qt.callLater(measure)
         Window.onHeightChanged: Qt.callLater(measure)
         // open, the island reaches over its neighbours in the bar: lift this applet above them
@@ -621,6 +640,8 @@ PlasmoidItem {
         function place() {
             if (!root.slotItem)
                 return;
+            // the panel may have moved the widget since (its margins come later): measure again
+            root.slotItem.measure();
             const p = root.slotItem.mapToGlobal(root.slotItem.width / 2, root.slotItem.winTop + root.barHeight);
             origin = Qt.point(Math.round(p.x - winWidth / 2), Math.round(p.y));
         }

@@ -25,8 +25,9 @@ Item {
     readonly property bool statusShown: !!(alert && alert.status)
     readonly property bool singleShown: actionsBeside && !valueShown && !statusShown && !hasLevel
     // the widest an alert gets is 380 px; narrower, it fits its content
+    // padding, lead, spacing, the words, spacing, the right side (with its margin), padding
     readonly property real preferredWidth: Math.min(380, 12 + 32 + 10 + Math.max(titleText.implicitWidth, subText.implicitWidth, 60)
-        + (accessory.implicitWidth > 0 ? 16 + accessory.implicitWidth : 0) + 12 + 6)
+        + 10 + (accessory.implicitWidth > 0 ? 6 + accessory.implicitWidth : 0) + 12 + 2)
     readonly property real preferredHeight: Math.max(32, texts.implicitHeight) + 24
     readonly property bool hovered: hover.hovered
 
