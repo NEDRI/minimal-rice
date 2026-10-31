@@ -1,62 +1,63 @@
-// ================================================================ the compact contents
+// The closed island's contents, as Isle's compact.js inside the top bar: the first activity (music, else
+// the focus timer) takes the left slot, music's bars the right; with both, the timer's time joins the bars.
 import QtQuick
-import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
 Item {
     id: comp
     property var isle
-    property bool inBar: true
-    clip: true
+
+    readonly property string primary: isle.hasTrack ? "music" : isle.hasTimer ? "timer" : ""
+    readonly property bool second: primary === "music" && isle.hasTimer
+    // how much wider than a slot the right side is while it holds the timer's time (balanced on the left)
+    readonly property real secondExtra: second ? secondTime.implicitWidth + 8 : 0
 
     Item {
-        id: left
-        anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
+        anchors { left: parent.left; leftMargin: 14 + comp.secondExtra; verticalCenter: parent.verticalCenter }
         width: 22; height: 22
-        visible: isle.activity
 
-        Kirigami.ShadowedImage {
+        Art {
             anchors.fill: parent
-            visible: isle.hasMusic
-            source: isle.hasMusic ? isle.player.artUrl : ""
+            visible: comp.primary === "music"
+            source: isle.artUrl
+            size: 22
             radius: 6
-            color: "#2c2c2e"
-            fillMode: Image.PreserveAspectCrop
         }
-        TimerRing { isle: comp.isle;
-            anchors.fill: parent
-            visible: !isle.hasMusic && isle.hasTimer
-            lineWidth: 3
+
+        Ring {
+            anchors.centerIn: parent
+            visible: comp.primary === "timer"
+            size: 18; lineWidth: 3
+            progress: isle.timerProgress
+            color: isle.timerColor
         }
     }
 
     Text {
         anchors.centerIn: parent
-        text: isle.clock(isle.now)
+        text: Qt.formatTime(isle.now, "HH:mm")
         color: "white"
         font { family: isle.font; pixelSize: 15; weight: Font.DemiBold; letterSpacing: -0.1 }
         font.features: { "tnum": 1 }
     }
 
-    Item {
+    Row {
         anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
-        width: rightText.visible ? rightText.width : 22
-        height: 22
-        visible: isle.activity
+        spacing: 8
+        visible: comp.primary === "music"
 
         Bars {
-            anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-            visible: isle.hasMusic
+            anchors.verticalCenter: parent.verticalCenter
             barHeight: 14
-            playing: isle.playing && visible
+            playing: isle.playing
         }
         Text {
-            id: rightText
-            anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-            visible: !isle.hasMusic && isle.hasTimer
-            text: isle.mmss(isle.timerLeft)
-            color: isle.timerPhase === "break" ? isle.green : "white"
-            font { family: isle.font; pixelSize: 15; weight: Font.DemiBold }
+            id: secondTime
+            visible: comp.second
+            anchors.verticalCenter: parent.verticalCenter
+            text: isle.mmss(isle.timerRemainingMs / 1000)
+            color: isle.timerColor
+            font { family: isle.font; pixelSize: 15; weight: Font.DemiBold; letterSpacing: -0.1 }
             font.features: { "tnum": 1 }
         }
     }

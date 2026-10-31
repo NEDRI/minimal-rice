@@ -1,66 +1,91 @@
-// Island: a KDE port of Isle's notch-style island (https://github.com/zickrian/isle, GPL-3.0-or-later).
-// In the top bar it is a black pill with the clock, the album art and dancing bars while music plays,
-// or the focus timer. A click springs it open into a 600 px card that hangs from the top of the screen,
-// with Music, Focus and Calendar pages; plugging in the charger makes it peek with the battery level.
-// The open island lives in its own borderless window over the bar, starting from the pill's place and
-// size and springing back into it, so the two read as one shape.
+// Island: Isle's notch-style island (https://github.com/zickrian/isle, GPL-3.0-or-later) for KDE Plasma.
+// Its look and behaviour follow Isle's own code, and its data comes from Isle's background service, isled,
+// over D-Bus. Closed, it hangs from the top edge of the screen as deep as the bar, with small concave
+// shoulders; hovered or clicked, it springs open into a 600 px card with pages; power changes make it peek.
+//
+// Plasma keeps its own windows below the panels, so the island is drawn in two parts that share the same
+// springs and the same outline: the bar-high top in the panel (this widget), and the rest in a borderless
+// window right under the bar. Together they read as one shape.
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Window
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
-import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.kirigami as Kirigami
-import org.kde.plasma.private.mpris as Mpris
 
 PlasmoidItem {
     id: root
 
-    // ---- Isle's sizes (CSS px) ----
+    // ---- Isle's sizes (CSS px), from controller.js, expanded.js, compact.js and peek.js ----
     readonly property int expandedWidth: 600
     readonly property int pageHeight: 150
     readonly property int bottomPadding: 14
-    readonly property int expandedRadius: 32
-    readonly property int peekRadius: 28
-    readonly property int pillRadius: 10
-    readonly property int idleWidth: 144
-    readonly property int activityWidth: 232
+    readonly property int compactWidth: 144        // the clock alone, inside the bar
+    readonly property int activitiesWidth: 232     // with music or the timer
+    readonly property var shapes: ({
+        closed: { radius: 10, shoulder: 7 },
+        open: { radius: 32, shoulder: 22 },
+        peek: { radius: 28, shoulder: 13 },
+    })
+    readonly property int peekHeight: 32 + 2 * 12
+    readonly property int hoverDelay: 120
+    readonly property int collapseDelay: 300
     readonly property string font: Qt.fontFamilies().indexOf("Inter Variable") >= 0 ? "Inter Variable"
         : Qt.fontFamilies().indexOf("Inter") >= 0 ? "Inter" : Kirigami.Theme.defaultFont.family
-    readonly property color dim: Qt.rgba(1, 1, 1, 0.55)
-    readonly property color green: "#30d158"
 
     // ---- state ----
     property string mode: "closed"        // closed | open | peek
-    property string page: "music"         // music | focus | calendar
+    property string page: "music"
+    property var alert: null
     property date now: new Date()
+    property real nowMs: Date.now()
+    property int barHeight: 36
+    readonly property color dim: Qt.rgba(1, 1, 1, 0.55)
 
-    readonly property var player: mpris.currentPlayer
-    readonly property bool hasMusic: player !== null && player.track !== ""
-        && player.playbackStatus !== Mpris.PlaybackStatus.Stopped
-    readonly property bool playing: hasMusic && player.playbackStatus === Mpris.PlaybackStatus.Playing
+    // ---- isled ----
+    readonly property alias daemon: isled
+    IsleDaemon { id: isled }
 
-    // focus timer (Isle's Focus page): 25 min of focus, then a 5 min break
-    property int focusMinutes: 25
-    property int breakMinutes: 5
-    property string timerPhase: "idle"     // idle | focus | break
-    property bool timerRunning: false
-    property int timerLeft: focusMinutes * 60
-    readonly property int timerTotal: (timerPhase === "break" ? breakMinutes : focusMinutes) * 60
-    readonly property bool hasTimer: timerPhase !== "idle"
+    readonly property var nowPlaying: isled.nowPlaying
+    readonly property bool hasTrack: !!(nowPlaying && nowPlaying.available && nowPlaying.title)
+    readonly property bool playing: hasTrack && nowPlaying.status === "Playing"
+    readonly property string artUrl: hasTrack && nowPlaying.art_path ? "file://" + nowPlaying.art_path : ""
+    readonly property real lengthMs: hasTrack ? nowPlaying.length_us / 1000 : 0
+    readonly property real positionMs: {
+        if (!hasTrack)
+            return 0;
+        let p = nowPlaying.position_us / 1000;
+        if (playing)
+            p += (nowMs - nowPlaying.sampled_at_ms) * (nowPlaying.rate || 1);
+        return lengthMs > 0 ? Math.max(0, Math.min(p, lengthMs)) : Math.max(0, p);
+    }
 
-    readonly property bool activity: hasMusic || hasTimer
-    readonly property int pillWidth: activity ? activityWidth : idleWidth
+    readonly property var pomodoro: isled.pomodoro
+    readonly property var pomodoroConfig: isled.pomodoroConfig
+    readonly property bool hasTimer: !!(pomodoro && pomodoro.phase !== "idle")
+    readonly property real timerRemainingMs: !pomodoro ? 25 * 60000
+        : pomodoro.running ? Math.max(0, pomodoro.ends_at_ms - nowMs) : pomodoro.remaining_ms
+    readonly property real timerProgress: pomodoro && pomodoro.duration_ms > 0 ? 1 - timerRemainingMs / pomodoro.duration_ms : 0
+    // white while focusing, green on a break
+    readonly property color timerColor: !pomodoro || pomodoro.phase === "focus" || pomodoro.phase === "idle" ? "white" : "#30d158"
 
-    preferredRepresentation: fullRepresentation
-    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
-    toolTipMainText: ""
-    toolTipSubText: ""
+    // the closed island's width: wider with an activity, wider still with the timer's time beside the bars
+    TextMetrics { id: secondMetrics; font.family: root.font; font.pixelSize: 15; font.weight: Font.DemiBold; text: "00:00" }
+    readonly property real closedWidth: (hasTrack || hasTimer ? activitiesWidth : compactWidth)
+        + (hasTrack && hasTimer ? 2 * (secondMetrics.width + 8) : 0)
 
-    function clock(d) { return Qt.formatTime(d, "HH:mm"); }
-    function mmss(s) {
-        s = Math.max(0, Math.round(s));
-        return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    function mmss(seconds) {
+        const s = Math.max(0, Math.ceil(seconds - 0.001));
+        const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+        return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(r).padStart(2, "0");
+    }
+
+    Timer {
+        // fast enough for the scrubber and the timer; a quiet tick otherwise
+        interval: root.playing || (root.pomodoro && root.pomodoro.running) ? 250 : 1000
+        repeat: true
+        running: true
+        onTriggered: { root.now = new Date(); root.nowMs = Date.now(); }
     }
 
     function open(p) {
@@ -69,171 +94,173 @@ PlasmoidItem {
         mode = "open";
         Qt.callLater(() => island.requestActivate());
     }
-    function close() { mode = "closed"; }
+    function close() {
+        expandTimer.stop();
+        collapseTimer.stop();
+        mode = alert && alertTimer.running ? "peek" : "closed";
+    }
 
-    Mpris.Mpris2Model { id: mpris }
+    // ---- hover: resting on the island opens it, leaving closes it (Isle's open-on: hover) ----
+    readonly property bool hovered: (slotItem && slotItem.hovered) || islandHover.hovered
+    onHoveredChanged: {
+        if (hovered) {
+            collapseTimer.stop();
+            if (mode !== "open")
+                expandTimer.restart();
+        } else {
+            expandTimer.stop();
+            if (mode === "open")
+                collapseTimer.restart();
+        }
+    }
+    Timer { id: expandTimer; interval: root.hoverDelay; onTriggered: if (root.hovered) root.open() }
+    Timer { id: collapseTimer; interval: root.collapseDelay; onTriggered: if (!root.hovered) root.close() }
 
+    // ---- alerts, as Isle's alerts.js `system` ----
     Timer {
-        interval: 1000
-        repeat: true
-        running: true
-        triggeredOnStart: true
+        id: alertTimer
         onTriggered: {
-            root.now = new Date();
-            if (root.playing)
-                root.player.updatePosition();
-            if (root.timerRunning) {
-                root.timerLeft -= 1;
-                if (root.timerLeft <= 0) {
-                    // focus done: a break; break done: back to idle
-                    if (root.timerPhase === "focus") {
-                        root.timerPhase = "break";
-                        root.timerLeft = root.breakMinutes * 60;
-                    } else {
-                        root.timerPhase = "idle";
-                        root.timerRunning = false;
-                        root.timerLeft = root.focusMinutes * 60;
-                    }
-                    root.peekText = root.timerPhase === "break" ? "Break" : "Focus done";
-                    root.peekSub = root.timerPhase === "break" ? root.breakMinutes + " min" : "Well done";
-                    root.peekValue = "";
-                    root.peekIcon = "\u{F13AB}";
-                    root.peek();
-                }
-            }
+            if (root.mode === "peek")
+                root.mode = "closed";
+        }
+    }
+    function showAlert(a) {
+        alert = a;
+        alertTimer.interval = a.duration;
+        alertTimer.restart();
+        if (mode !== "open")
+            mode = "peek";
+    }
+    Connections {
+        target: isled
+        function onSystemEvent(e) {
+            const pct = Math.round(e.percent || 0) + "%";
+            if (e.kind === "power")
+                root.showAlert({ icon: e.plugged ? "isle-bolt" : e.percent <= 20 ? "isle-battery-low-symbolic" : "isle-battery-symbolic",
+                    ring: e.percent / 100, title: e.plugged ? "Charging" : "On battery",
+                    subtitle: e.plugged ? "Charger connected" : "Charger disconnected", value: pct,
+                    tone: e.plugged ? "good" : e.percent <= 20 ? "bad" : "neutral", duration: 2600 });
+            else if (e.kind === "battery_low")
+                root.showAlert({ icon: "isle-battery-low-symbolic", ring: e.percent / 100, title: "Low battery",
+                    subtitle: "Plug in your charger soon", value: pct, tone: "bad", duration: 8000 });
+            else if (e.kind === "battery_full")
+                root.showAlert({ icon: "isle-bolt", ring: 1, title: "Fully charged",
+                    subtitle: "You can unplug your charger", value: "100%", tone: "good", duration: 2600 });
+            else if (e.kind === "network" && !e.connected)
+                root.showAlert({ icon: "isle-wifi-off-symbolic", title: "Offline",
+                    subtitle: "The network connection was lost", tone: "bad", duration: 2600 });
+        }
+        function onPhaseFinished(finished, next) {
+            const pause = next === "short_break" || next === "long_break";
+            root.showAlert({ icon: "isle-timer-symbolic", title: pause ? "Time for a break" : "Back to focus",
+                subtitle: pause ? "Focus session done" : "Break is over", tone: pause ? "good" : "neutral", duration: 8000 });
         }
     }
 
-    // ---- charging peek, as Isle's alerts ----
-    property string peekIcon: ""
-    property string peekText: ""
-    property string peekSub: ""
-    property string peekValue: ""
-
-    function peek() {
-        if (mode === "open")
-            return;
-        mode = "peek";
-        peekTimer.restart();
-    }
-    Timer {
-        id: peekTimer
-        interval: 3000
-        onTriggered: if (root.mode === "peek") root.close()
-    }
-
-    Plasma5Support.DataSource {
-        id: power
-        engine: "powermanagement"
-        connectedSources: ["Battery", "AC Adapter"]
-        property bool plugged: data["AC Adapter"] ? !!data["AC Adapter"]["Plugged in"] : false
-        property int percent: data["Battery"] ? Number(data["Battery"]["Percent"] || 0) : 0
-        property bool ready: false
-        onPluggedChanged: {
-            if (!ready)
-                return;
-            root.peekIcon = plugged ? "\u{F0084}" : "\u{F0079}";
-            root.peekText = plugged ? "Charging" : "On battery";
-            root.peekSub = plugged ? "Plugged in" : "Charger unplugged";
-            root.peekValue = percent + "%";
-            root.peek();
-        }
-        Component.onCompleted: Qt.callLater(() => ready = true)
-    }
-
-    // ================================================================ one shape, two windows
-    // Plasma keeps its own windows below the panel, so the island is drawn in two parts that share
-    // the same springs: the bar-high top in the panel (the pill, which grows into the header) and the
-    // rest in a borderless window right under the panel. Together they hang from the screen's top edge.
+    // ---- the springs: Isle's island spring (~3.5 % overshoot) for size, a gentler one for the corners ----
+    readonly property var target: mode === "open"
+        ? { width: expandedWidth, height: barHeight + pageHeight + bottomPadding, radius: shapes.open.radius, shoulder: shapes.open.shoulder }
+        : mode === "peek"
+        ? { width: 2 * Math.round(Math.max(peekMeasure.preferredWidth, closedWidth) / 2), height: peekHeight, radius: shapes.peek.radius, shoulder: shapes.peek.shoulder }
+        : { width: 2 * Math.round(closedWidth / 2), height: barHeight, radius: shapes.closed.radius, shoulder: shapes.closed.shoulder }
     Item {
         visible: false
-        // width of the whole island, its total height from the top of the screen, bottom radius,
-        // and how open it is (0 = the pill, 1 = hanging from the screen edge)
-        Spring { id: w; target: root.mode === "open" ? root.expandedWidth : root.mode === "peek" ? 320 : root.pillWidth }
-        Spring { id: h; target: root.mode === "open" ? root.barHeight + root.pageHeight + root.bottomPadding
-                                : root.mode === "peek" ? root.barHeight + 52 : root.barHeight }
-        Spring { id: r; damping: 25
-                 target: root.mode === "open" ? root.expandedRadius : root.mode === "peek" ? root.peekRadius : root.pillRadius }
-        Spring { id: o; damping: 25; precision: 0.002; target: root.mode === "closed" ? 0 : 1 }
+        Spring { id: springW; target: root.target.width }
+        Spring { id: springH; target: root.target.height }
+        Spring { id: springR; damping: 25; target: root.target.radius }
+        Spring { id: springS; damping: 25; target: root.target.shoulder }
+        Peek { id: peekMeasure; isle: root; alert: root.alert }   // only measured
     }
-    readonly property bool moving: !(w.settled && h.settled && r.settled && o.settled)
-    property int barHeight: 36
-
     FrameAnimation {
-        running: root.moving
-        onTriggered: { w.step(frameTime); h.step(frameTime); r.step(frameTime); o.step(frameTime); }
+        running: !(springW.settled && springH.settled && springR.settled && springS.settled)
+        onTriggered: { springW.step(frameTime); springH.step(frameTime); springR.step(frameTime); springS.step(frameTime); }
     }
 
-    // ---------------------------------------------------------------- the part in the bar
+    preferredRepresentation: fullRepresentation
+    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+
+    // ================================================================ the part in the bar
     fullRepresentation: Item {
         id: slot
 
-        // as wide as the open island, so it can grow in place; the spacers on both sides give way
-        Layout.preferredWidth: root.expandedWidth
-        Layout.minimumWidth: root.expandedWidth
+        // room for the open island and its shoulders; the spacers on either side give way
+        Layout.preferredWidth: root.expandedWidth + 2 * root.shapes.open.shoulder
+        Layout.minimumWidth: Layout.preferredWidth
         Layout.fillHeight: true
 
-        // the panel window's top and height, in this item's coordinates: the island reaches to the
-        // screen edge even when the panel gives the widget a margin
+        readonly property bool hovered: slotHover.hovered
+
+        // the panel window's top in this item's coordinates, so the island hangs from the screen edge even
+        // when the panel gives the widget a margin; the bar as drawn is 36 px of a slightly taller window
         property real winTop: 0
+        readonly property real winHeight: Math.min(Window.height > 0 ? Window.height : height, 36)
         function measure() { winTop = -mapToItem(null, 0, 0).y; }
         onYChanged: Qt.callLater(measure)
         onHeightChanged: Qt.callLater(measure)
         Window.onHeightChanged: Qt.callLater(measure)
-        // the bar as drawn: the panel window is a little taller than the bar (36 px in the Lorien layout)
-        readonly property real winHeight: Math.min(Window.height > 0 ? Window.height : height, 36)
-
         Component.onCompleted: {
             Qt.callLater(measure);
             root.slotItem = slot;
             root.barHeight = Qt.binding(() => slot.winHeight);
         }
 
-        Rectangle {
-            id: pill
+        Item {
+            y: slot.winTop
+            width: slot.width
+            height: slot.winHeight
 
-            readonly property real pillHeight: Math.min(slot.winHeight - 8, 28)
-            readonly property real pillY: slot.winTop + (slot.winHeight - pillHeight) / 2
-            x: (slot.width - width) / 2
-            width: w.value
-            // from the pill in the bar's middle to the full bar height at the screen edge
-            y: pillY + (slot.winTop - pillY) * o.value
-            height: pillHeight + (slot.winHeight - pillHeight) * o.value
-            color: "black"
-            topLeftRadius: root.pillRadius * (1 - o.value)
-            topRightRadius: root.pillRadius * (1 - o.value)
-            bottomLeftRadius: root.pillRadius * (1 - o.value)
-            bottomRightRadius: root.pillRadius * (1 - o.value)
-            clip: true
-
-            CompactRow {
-                isle: root
-                width: parent.width
-                height: pill.pillHeight
-                anchors.verticalCenter: parent.verticalCenter
-                opacity: root.mode === "closed" ? 1 : 0
-                visible: opacity > 0
-                Behavior on opacity { NumberAnimation { duration: root.mode === "closed" ? 320 : 160 } }
-            }
-
-            Header {
-                isle: root
-                anchors { fill: parent; leftMargin: 28; rightMargin: 24 }
-                opacity: root.mode === "open" ? 1 : 0
-                visible: opacity > 0
-                Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
-            }
-
-            MouseArea {
+            IslandShape {
                 anchors.fill: parent
-                z: -1
-                cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                onClicked: mouse => {
-                    if (mouse.button === Qt.MiddleButton && root.hasMusic)
-                        root.player.PlayPause();
-                    else
-                        root.mode === "open" ? root.close() : root.open();
+                bodyWidth: springW.value; bodyHeight: springH.value; radius: springR.value; shoulder: springS.value
+            }
+
+            Item {
+                x: (parent.width - springW.value) / 2
+                width: springW.value
+                height: parent.height
+                clip: true
+
+                HoverHandler { id: slotHover }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.MiddleButton && root.hasTrack)
+                            isled.call("Media1", "PlayPause");
+                        else
+                            root.mode === "open" ? root.close() : root.open();
+                    }
+                }
+
+                CompactRow {
+                    isle: root
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 2 * Math.round(root.closedWidth / 2)
+                    height: root.barHeight
+                    opacity: root.mode === "closed" ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: root.mode === "closed" ? 320 : 160 } }
+                }
+                // .isle-header: 0 24 px 0 28 px
+                Header {
+                    isle: root
+                    x: (parent.width - root.expandedWidth) / 2 + 28
+                    width: root.expandedWidth - 28 - 24
+                    height: root.barHeight
+                    opacity: root.mode === "open" ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
+                }
+                Peek {
+                    isle: root
+                    alert: root.alert
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: root.target.width
+                    height: root.peekHeight
+                    opacity: root.mode === "peek" ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
                 }
             }
         }
@@ -241,12 +268,12 @@ PlasmoidItem {
 
     property Item slotItem: null
 
-    // ---------------------------------------------------------------- the part below the bar
+    // ================================================================ the part below the bar
     PlasmaCore.Dialog {
         id: island
 
-        readonly property int winWidth: root.expandedWidth + 40
-        readonly property real depth: h.value - root.barHeight   // how far it reaches below the bar
+        readonly property int winWidth: root.expandedWidth + 2 * root.shapes.open.shoulder
+        readonly property real depth: springH.value - root.barHeight
         property point origin: Qt.point(0, 0)
 
         type: PlasmaCore.Dialog.AppletPopup
@@ -279,64 +306,53 @@ PlasmoidItem {
                 onClicked: root.close()
             }
 
-            Rectangle {
-                id: shape
-                x: (parent.width - width) / 2
-                width: w.value
-                height: Math.max(0, island.depth)
-                color: "black"
+            Item {
+                width: parent.width
+                height: Math.max(0, island.depth) + 2
                 clip: true
-                bottomLeftRadius: Math.min(r.value, height)
-                bottomRightRadius: Math.min(r.value, height)
 
-                MouseArea { anchors.fill: parent }   // clicks on the island stay on it
-
-                // peek: charging and timer alerts
-                RowLayout {
-                    anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 14; rightMargin: 18; topMargin: 4 }
-                    height: 40
-                    spacing: 10
-                    opacity: root.mode === "peek" ? 1 : 0
-                    visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
-
-                    Rectangle {
-                        Layout.preferredWidth: 36; Layout.preferredHeight: 36
-                        radius: 18
-                        color: "#1c1c1e"
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.peekIcon
-                            color: root.peekText === "Charging" || root.peekText === "Break" ? root.green : "white"
-                            font { family: "JetBrainsMono Nerd Font"; pixelSize: 18 }
-                        }
-                    }
-                    ColumnLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
-                        Text { text: root.peekText; color: "white"; font { family: root.font; pixelSize: 14; weight: Font.DemiBold } }
-                        Text { text: root.peekSub; color: Qt.rgba(1, 1, 1, 0.5); font { family: root.font; pixelSize: 12 } }
-                    }
-                    Text {
-                        text: root.peekValue
-                        color: "white"
-                        font { family: root.font; pixelSize: 20; weight: Font.DemiBold; letterSpacing: -0.5 }
-                        font.features: { "tnum": 1 }
-                    }
+                // the same outline as in the bar, shifted up by the bar's height
+                IslandShape {
+                    y: -root.barHeight
+                    width: parent.width
+                    height: springH.value
+                    bodyWidth: springW.value; bodyHeight: springH.value; radius: springR.value; shoulder: springS.value
                 }
 
-                // open: the page under the header
                 Item {
-                    anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 6 }
-                    width: root.expandedWidth - 56
-                    height: root.pageHeight - 6
-                    opacity: root.mode === "open" ? 1 : 0
-                    visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
+                    x: (parent.width - springW.value) / 2
+                    width: springW.value
+                    height: Math.max(0, island.depth)
+                    clip: true
 
-                    MusicPage { isle: root; anchors.fill: parent; visible: root.page === "music" }
-                    FocusPage { isle: root; anchors.fill: parent; visible: root.page === "focus" }
-                    CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
+                    HoverHandler { id: islandHover }
+                    MouseArea { anchors.fill: parent }   // clicks on the island stay on it
+
+                    Peek {
+                        isle: root
+                        alert: root.alert
+                        y: -root.barHeight
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.target.width
+                        height: root.peekHeight
+                        opacity: root.mode === "peek" ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
+                    }
+
+                    // the open page under the header (.isle-page: 6 px 28 px 0)
+                    Item {
+                        anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 6 }
+                        width: root.expandedWidth - 56
+                        height: root.pageHeight - 6
+                        opacity: root.mode === "open" ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
+
+                        MusicPage { isle: root; anchors.fill: parent; visible: root.page === "music" }
+                        FocusPage { isle: root; anchors.fill: parent; visible: root.page === "focus" }
+                        CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
+                    }
                 }
             }
         }

@@ -11,7 +11,6 @@ read -rp "Continue? [Y/n] " a; [[ -z "$a" || "$a" =~ ^[Yy] ]] || exit 0
 L="$HOME/.local/share"
 rm -rf "$L/lorien-rice" "$L"/plasma/plasmoids/org.lorien.* "$L/plasma/desktoptheme/lorien" \
        "$L/gnome-shell/extensions/lorien-bar@lorien-rice" "$HOME/.config/lorien-rice" \
-       "$HOME/.config/systemd/user/isled.service.d" \
        "$HOME/.config/autostart/lorien-accent.desktop" "$HOME/.config/autostart/waywallen.desktop" \
        "$HOME/.config/environment.d/20-lorien-decorations.conf" \
        "$HOME/.local/bin/updateall" "$HOME/.local/bin/ramka" "$HOME/.local/bin/rmaka"

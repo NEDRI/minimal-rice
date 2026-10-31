@@ -93,7 +93,6 @@ if $gnome; then
     mkdir -p "$L/gnome-shell/extensions" "$HOME/.config/systemd/user"
     rm -rf "$L/gnome-shell/extensions/lorien-bar@lorien-rice"
     cp -a "$REPO/gnome/lorien-bar@lorien-rice" "$L/gnome-shell/extensions/"
-    cp -a "$REPO/config/systemd/isled.service.d" "$HOME/.config/systemd/user/"
     cp "$REPO/config/environment.d/20-lorien-decorations.conf" "$HOME/.config/environment.d/"
 fi
 
@@ -137,6 +136,14 @@ if $build; then
         git clone --depth 1 https://github.com/Petexy/Linexin-Launcher.git "$tmp/linexin"
         kpackagetool6 -t Plasma/Applet -u "$tmp/linexin/package" 2>/dev/null || kpackagetool6 -t Plasma/Applet -i "$tmp/linexin/package"
         rm -rf "$tmp"
+
+        # The island (org.lorien.island) reads music, the focus timer and power alerts from isled, the
+        # background service of Isle for GNOME; Isle's installer puts it in ~/.local/bin as a user service.
+        if [[ ! -x "$HOME/.local/bin/isled" ]]; then
+            say "isled, the island's background service (from Isle)"
+            curl -fsSL https://raw.githubusercontent.com/zickrian/isle/main/get.sh | bash ||
+                echo "isled could not be installed; the island shows only the clock until it is."
+        fi
 
         say "Hyprland-style window borders (KDE Rounded Corners, installing needs sudo)"
         "$L/lorien-rice/rebuild-corners.sh" || echo "Window borders failed; try again later with: ramka"
