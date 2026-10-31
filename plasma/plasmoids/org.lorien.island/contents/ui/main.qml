@@ -135,11 +135,18 @@ PlasmoidItem {
     function openAssistant() {
         alertTimer.stop();
         mode = "assistant";
+        keyboardWanted = true;
         Qt.callLater(() => { island.requestActivate(); assistantView.focusField(); });
     }
     Plasmoid.onActivated: mode === "assistant" ? close() : openAssistant()
     // the keyboard only when asked for: a click into one of the island's fields, or the assistant (as Isle)
-    function wantKeyboard() { island.requestActivate(); }
+    property bool keyboardWanted: false
+    function wantKeyboard() {
+        keyboardWanted = true;
+        Qt.callLater(() => island.requestActivate());
+    }
+    // closed or peeking, the island gives the keyboard back
+    onModeChanged: if (mode === "closed" || mode === "peek") keyboardWanted = false
     function close() {
         expandTimer.stop();
         collapseTimer.stop();
@@ -636,7 +643,8 @@ PlasmoidItem {
         type: PlasmaCore.Dialog.Notification
         location: PlasmaCore.Types.Floating
         backgroundHints: PlasmaCore.Dialog.NoBackground
-        flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        // never focused by being shown: only when the island asks for the keyboard (see wantKeyboard)
+        flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | (root.keyboardWanted ? 0 : Qt.WindowDoesNotAcceptFocus)
         hideOnWindowDeactivate: false
         visible: root.mode !== "closed" || depth > 0.5
         x: origin.x
