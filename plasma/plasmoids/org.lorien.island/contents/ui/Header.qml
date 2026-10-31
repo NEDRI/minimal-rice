@@ -14,6 +14,7 @@ Item {
         { id: "shelf", icon: "isle-shelf", label: "Shelf" },
         { id: "calendar", icon: "isle-calendar", label: "Calendar" },
         { id: "apps", icon: "isle-apps", label: "Apps" },
+        { id: "usage", icon: "isle-gauge", label: "Usage" },
     ]
 
     Row {
@@ -21,7 +22,8 @@ Item {
         spacing: 2
 
         Repeater {
-            model: comp.tabs
+            // Usage has no tab without a provider, as in Isle
+            model: comp.tabs.filter(t => t.id !== "usage" || isle.hasUsage)
             Rectangle {
                 id: tab
                 readonly property bool open: isle.page === modelData.id
@@ -69,6 +71,13 @@ Item {
         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
         spacing: 10
 
+        // the assistant, as AI rather than a microphone
+        IsleButton {
+            anchors.verticalCenter: parent.verticalCenter
+            padding: 4; icon: "isle-sparkle-symbolic"; iconSize: 15
+            opacity: hovered ? 1 : 0.6
+            onClicked: isle.openAssistant()
+        }
         Bars {
             anchors.verticalCenter: parent.verticalCenter
             visible: isle.hasTrack

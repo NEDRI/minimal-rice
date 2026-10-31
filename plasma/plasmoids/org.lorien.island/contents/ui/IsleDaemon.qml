@@ -19,6 +19,8 @@ Item {
     readonly property var clipboard: parse(clipboardProps.properties.Items)
     readonly property var shelf: parse(shelfProps.properties.Items)
     readonly property var events: parse(calendarProps.properties.Events)
+    readonly property var usage: parse(usageProps.properties.Usage)
+    signal usageAlert(string provider, string window, real percent, real resetsAt)
 
     signal systemEvent(var event)
     signal phaseFinished(string finished, string next)
@@ -59,6 +61,22 @@ Item {
     Props { id: clipboardProps; iface: "io.github.zickrian.isle.Clipboard1" }
     Props { id: shelfProps; iface: "io.github.zickrian.isle.Shelf1" }
     Props { id: calendarProps; iface: "io.github.zickrian.isle.Calendar1" }
+    Props { id: usageProps; iface: "io.github.zickrian.isle.Usage1" }
+    DBus.SignalWatcher {
+        busType: DBus.BusType.Session
+        service: daemon.service
+        path: daemon.path
+        iface: "io.github.zickrian.isle.Usage1"
+        function dbusAlert(provider, window, percent, resetsAt) {
+            daemon.usageAlert(String(provider.value ?? provider), String(window.value ?? window),
+                Number(percent.value ?? percent), Number(resetsAt.value ?? resetsAt));
+        }
+    }
+    // Isle's usage settings, as it sends them to isled when it starts (the assistant stays off in KDE)
+    function syncUsage() {
+        call("Usage1", "SetConfig", [JSON.stringify({ enabled: true, claude: true, codex: true, grok: true,
+            assistant: false, warn: 80, critical: 95 })], "s");
+    }
 
     // In GNOME Isle's extension hands isled what is copied; in KDE Klipper says when it changes.
     property string lastCopied: ""
@@ -105,8 +123,8 @@ Item {
 
     // isled (re)started: read everything again, and ask for lyrics (Isle's lyrics-online, on by default)
     onRunningChanged: if (running) {
-        media.updateAll(); pomodoroProps.updateAll(); systemProps.updateAll(); todo.updateAll(); clipboardProps.updateAll(); shelfProps.updateAll(); calendarProps.updateAll();
+        media.updateAll(); pomodoroProps.updateAll(); systemProps.updateAll(); todo.updateAll(); clipboardProps.updateAll(); shelfProps.updateAll(); calendarProps.updateAll(); usageProps.updateAll(); syncUsage();
         call("Media1", "SetLyrics", [true], "b");
     }
-    Component.onCompleted: if (running) call("Media1", "SetLyrics", [true], "b")
+    Component.onCompleted: if (running) { call("Media1", "SetLyrics", [true], "b"); syncUsage(); }
 }

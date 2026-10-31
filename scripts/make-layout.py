@@ -254,6 +254,8 @@ var cfg = %s;
 panels().forEach(function (p) {
     if (p.location !== "%s") return;
     // no colorizer background behind the island: it draws its own black shape
+    // Super+I opens the island's assistant, as in Isle
+    p.widgets("org.lorien.island").forEach(function (w) { w.globalShortcut = "Meta+I"; });
     var skip = p.widgets("org.lorien.island").map(function (w) {
         return {id: w.id, name: "org.lorien.island", blacklisted: true};
     });

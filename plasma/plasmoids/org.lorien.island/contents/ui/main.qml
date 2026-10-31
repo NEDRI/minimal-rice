@@ -38,7 +38,7 @@ PlasmoidItem {
         : Qt.fontFamilies().indexOf("Inter") >= 0 ? "Inter" : Kirigami.Theme.defaultFont.family
 
     // ---- state ----
-    property string mode: "closed"        // closed | open | peek
+    property string mode: "closed"        // closed | open | peek | assistant
     property string page: "music"
     property string musicMode: "player"     // player | lyrics | audio, on the Music page
     // the open island is 600 px, 720 with the lyrics beside the player
@@ -72,6 +72,8 @@ PlasmoidItem {
     readonly property var clipboard: isled.clipboard
     readonly property var shelf: isled.shelf
     readonly property var events: isled.events
+    readonly property var usage: isled.usage
+    readonly property bool hasUsage: !!(usage && usage.providers && usage.providers.length)
     readonly property alias appUsage: appUsageTracker
     AppUsage { id: appUsageTracker }
     function copyText(text) { isled.copyText(text); }
@@ -129,6 +131,13 @@ PlasmoidItem {
         mode = "open";
         Qt.callLater(() => island.requestActivate());
     }
+    // the assistant: from the header's sparkle, or Super+I (the widget's shortcut)
+    function openAssistant() {
+        alertTimer.stop();
+        mode = "assistant";
+        Qt.callLater(() => { island.requestActivate(); assistantView.focusField(); });
+    }
+    Plasmoid.onActivated: mode === "assistant" ? close() : openAssistant()
     function close() {
         expandTimer.stop();
         collapseTimer.stop();
@@ -140,7 +149,7 @@ PlasmoidItem {
     onHoveredChanged: {
         if (hovered) {
             collapseTimer.stop();
-            if (mode !== "open" && !alertHoldsHover)
+            if (mode !== "open" && mode !== "assistant" && !alertHoldsHover)
                 expandTimer.restart();
         } else {
             expandTimer.stop();
@@ -210,6 +219,22 @@ PlasmoidItem {
             }
         }
         // a phase ended; when the next one waits to be started, a button starts it
+        // an AI plan limit nears its end: the provider's logo in a ring of the share
+        function onUsageAlert(provider, window, percent, resetsAt) {
+            const name = provider.toLowerCase();
+            const [span, model] = window.split(" · ");
+            const limit = window === "5 hours" ? "5-hour limit" : ((span === "Week" ? "Weekly" : span) + (model ? " " + model : "") + " limit");
+            const at = new Date(resetsAt);
+            const when = resetsAt - Date.now() < 20 * 3600e3 ? Qt.formatTime(at, "HH:mm") : Qt.formatDate(at, "ddd") + " " + Qt.formatTime(at, "HH:mm");
+            root.showAlert({ key: "usage:" + provider + ":" + window,
+                icon: name.indexOf("claude") >= 0 ? "isle-claude" : name.indexOf("grok") >= 0 ? "isle-grok"
+                    : name.indexOf("gpt") >= 0 || name.indexOf("codex") >= 0 ? "isle-openai" : "isle-gauge",
+                ring: Math.min(1, percent / 100), title: provider,
+                subtitle: resetsAt > 0 ? limit + " · resets " + when : limit, value: Math.round(percent) + "%",
+                tone: Math.round(percent) >= 95 ? "bad" : name.indexOf("claude") >= 0 ? "claude" : name.indexOf("grok") >= 0 ? "grok"
+                    : name.indexOf("gpt") >= 0 || name.indexOf("codex") >= 0 ? "codex" : "neutral",
+                duration: 8000, page: "usage" });
+        }
         function onPhaseFinished(finished, next) {
             const state = root.pomodoro;
             const waiting = !state || !state.running;
@@ -430,7 +455,9 @@ PlasmoidItem {
     }
 
     // ---- the springs: Isle's island spring (~3.5 % overshoot) for size, a gentler one for the corners ----
-    readonly property var target: mode === "open"
+    readonly property var target: mode === "assistant"
+        ? { width: expandedWidth, height: barHeight + assistantView.contentHeight, radius: 26, shoulder: 13 }
+        : mode === "open"
         ? { width: openWidth, height: barHeight + pageHeight + bottomPadding, radius: shapes.open.radius, shoulder: shapes.open.shoulder }
         : mode === "peek"
         ? { width: 2 * Math.round(Math.max(peekMeasure.preferredWidth, closedWidth) / 2), height: peekMeasure.preferredHeight, radius: shapes.peek.radius, shoulder: shapes.peek.shoulder }
@@ -533,6 +560,30 @@ PlasmoidItem {
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
                 }
+                // the assistant's header: its name, and a new chat
+                Item {
+                    x: 16
+                    width: parent.width - 32
+                    height: root.barHeight
+                    opacity: root.mode === "assistant" ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } }
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 6
+                        IsleIcon { anchors.verticalCenter: parent.verticalCenter; name: "isle-sparkle-symbolic"; size: 13; opacity: 0.6 }
+                        Text { renderType: Text.QtRendering; anchors.verticalCenter: parent.verticalCenter
+                               text: assistantView.messages.length ? "Chat" : "Assistant"; color: Qt.rgba(1, 1, 1, 0.45)
+                               font { family: root.font; pixelSize: 12; weight: Font.DemiBold } }
+                    }
+                    IsleButton {
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                        visible: assistantView.messages.length > 0
+                        padding: 5; icon: "isle-plus-symbolic"; iconSize: 12
+                        color: hovered ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.08)
+                        onClicked: assistantView.newChat()
+                    }
+                }
                 Peek {
                     isle: root
                     alert: root.alert
@@ -574,7 +625,7 @@ PlasmoidItem {
             origin = Qt.point(Math.round(p.x - winWidth / 2), Math.round(p.y));
         }
         onVisibleChanged: if (visible) place()
-        onActiveChanged: if (!active && root.mode === "open") root.close()
+        onActiveChanged: if (!active && (root.mode === "open" || root.mode === "assistant")) root.close()
 
         mainItem: Item {
             width: island.winWidth
@@ -640,6 +691,19 @@ PlasmoidItem {
                         ShelfPage { isle: root; anchors.fill: parent; visible: root.page === "shelf" }
                         CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
                         AppsPage { isle: root; anchors.fill: parent; visible: root.page === "apps" }
+                        UsagePage { isle: root; anchors.fill: parent; visible: root.page === "usage" }
+                    }
+
+                    // the assistant, under its header in the bar; kept while closed, so the chat stays
+                    AssistantView {
+                        id: assistantView
+                        isle: root
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.expandedWidth
+                        height: contentHeight
+                        opacity: root.mode === "assistant" ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity { NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } }
                     }
                 }
             }

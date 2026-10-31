@@ -13,7 +13,8 @@ Item {
     property var alert: null
     signal closeRequested()
 
-    readonly property color toneColor: !alert ? "white" : ({ good: "#30d158", focus: "#30d158", bad: "#ff453a", warn: "#ff9f0a" })[alert.tone] || "white"
+    readonly property color toneColor: !alert ? "white" : ({ good: "#30d158", focus: "#30d158", bad: "#ff453a", warn: "#ff9f0a",
+        claude: Qt.rgba(0.85, 0.47, 0.34, 1), codex: Qt.rgba(0.06, 0.64, 0.5, 1), grok: Qt.rgba(0.93, 0.94, 0.96, 1) })[alert.tone] || "white"
     readonly property bool neutral: !alert || !alert.tone || alert.tone === "neutral"
     readonly property bool hasRing: !!alert && alert.ring !== undefined && alert.ring !== null
     readonly property bool hasLevel: !!alert && alert.level !== undefined && alert.level !== null
