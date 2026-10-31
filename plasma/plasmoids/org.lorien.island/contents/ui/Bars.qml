@@ -1,15 +1,22 @@
 // Isle's music bars: four white bars that bounce at random while playing and rest in a "|ılı" shape.
 import QtQuick
 
-Row {
+// A fixed size whatever the bars do, so the layouts around them never move with the music.
+Item {
     id: bars
 
     property real barHeight: 16
     property bool playing: false
     readonly property var rest: [0.45, 1, 0.7, 0.35]
 
+    implicitWidth: 4 * 3 + 3 * 2
+    implicitHeight: barHeight
+    width: implicitWidth
+    height: implicitHeight
+
+    Row {
+    anchors.fill: parent
     spacing: 2
-    height: barHeight
 
     Repeater {
         model: 4
@@ -66,4 +73,5 @@ Row {
             Component.onCompleted: if (bars.playing) next()
         }
     }
+}
 }
