@@ -8,6 +8,7 @@ import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import St from 'gi://St';
 import {Extension, InjectionManager} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const FALLBACK = '#b589d6';
 // Waywallen draws the live wallpaper in a monitor-sized window of its own; with nothing else open
@@ -52,6 +53,19 @@ export default class LorienBar extends Extension {
                     w.get_monitor() === monitor && w.is_fullscreen() && !w.minimized &&
                     w.located_on_workspace(workspace) && !w.title?.includes(RENDERER_ID));
             });
+        // Mutter only announces a fullscreen change when its own answer changes, so the shell can
+        // keep a "fullscreen" state taken before this extension loaded, or when the wallpaper window
+        // appears after the last app closed. Ask the bar, the dock and Isle to look again whenever
+        // windows come and go.
+        this._signals = [];
+        const wm = global.window_manager;
+        for (const sig of ['map', 'destroy', 'minimize', 'unminimize'])
+            this._signals.push([wm, wm.connect(sig, () => this._recheckFullscreen())]);
+        const ws = global.workspace_manager;
+        this._signals.push([ws, ws.connect('active-workspace-changed', () => this._recheckFullscreen())]);
+        this._signals.push([Main.layoutManager,
+            Main.layoutManager.connect('startup-complete', () => this._recheckFullscreen())]);
+        this._recheckFullscreen();
         this._theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
         this._file = null;
         this._apply();
@@ -68,12 +82,29 @@ export default class LorienBar extends Extension {
     }
 
     disable() {
+        this._signals?.forEach(([obj, id]) => obj.disconnect(id));
+        this._signals = null;
+        if (this._recheckId)
+            GLib.source_remove(this._recheckId);
+        this._recheckId = 0;
         this._injection?.clear();
         this._injection = null;
+        global.display.emit('in-fullscreen-changed');
         this._monitors?.forEach(m => m.cancel());
         this._monitors = null;
         this._unload();
         this._theme = null;
+    }
+
+    _recheckFullscreen() {
+        // after the window animations, when the window stack has settled
+        if (this._recheckId)
+            GLib.source_remove(this._recheckId);
+        this._recheckId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
+            this._recheckId = 0;
+            global.display.emit('in-fullscreen-changed');
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     _apply() {
