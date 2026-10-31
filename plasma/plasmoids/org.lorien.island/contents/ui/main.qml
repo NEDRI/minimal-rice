@@ -12,6 +12,7 @@ import QtQuick.Window
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.notificationmanager as NotificationManager
 
 PlasmoidItem {
     id: root
@@ -36,6 +37,9 @@ PlasmoidItem {
     // ---- state ----
     property string mode: "closed"        // closed | open | peek
     property string page: "music"
+    property string musicMode: "player"     // player | lyrics | audio, on the Music page
+    // the open island is 600 px, 720 with the lyrics beside the player
+    readonly property int openWidth: page === "music" && musicMode === "lyrics" && hasTrack ? 720 : expandedWidth
     property var alert: null
     property date now: new Date()
     property real nowMs: Date.now()
@@ -58,6 +62,20 @@ PlasmoidItem {
         if (playing)
             p += (nowMs - nowPlaying.sampled_at_ms) * (nowPlaying.rate || 1);
         return lengthMs > 0 ? Math.max(0, Math.min(p, lengthMs)) : Math.max(0, p);
+    }
+
+    readonly property var lyrics: isled.lyrics
+    readonly property var tasks: isled.tasks
+
+    // Do Not Disturb is Plasma's own: until a date, here one far off (on until turned off)
+    NotificationManager.Settings { id: notificationSettings }
+    readonly property bool dnd: notificationSettings.notificationsInhibitedUntil > now
+    function toggleDnd() {
+        const until = new Date();
+        if (!dnd)
+            until.setFullYear(until.getFullYear() + 100);
+        notificationSettings.notificationsInhibitedUntil = until;
+        notificationSettings.save();
     }
 
     readonly property var pomodoro: isled.pomodoro
@@ -159,7 +177,7 @@ PlasmoidItem {
 
     // ---- the springs: Isle's island spring (~3.5 % overshoot) for size, a gentler one for the corners ----
     readonly property var target: mode === "open"
-        ? { width: expandedWidth, height: barHeight + pageHeight + bottomPadding, radius: shapes.open.radius, shoulder: shapes.open.shoulder }
+        ? { width: openWidth, height: barHeight + pageHeight + bottomPadding, radius: shapes.open.radius, shoulder: shapes.open.shoulder }
         : mode === "peek"
         ? { width: 2 * Math.round(Math.max(peekMeasure.preferredWidth, closedWidth) / 2), height: peekHeight, radius: shapes.peek.radius, shoulder: shapes.peek.shoulder }
         : { width: 2 * Math.round(closedWidth / 2), height: barHeight, radius: shapes.closed.radius, shoulder: shapes.closed.shoulder }
@@ -183,8 +201,8 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: slot
 
-        // room for the open island and its shoulders; the spacers on either side give way
-        Layout.preferredWidth: root.expandedWidth + 2 * root.shapes.open.shoulder
+        // as wide as the closed island; open, it reaches over the empty spacers on either side
+        Layout.preferredWidth: 2 * Math.round(root.closedWidth / 2) + 2 * root.shapes.closed.shoulder
         Layout.minimumWidth: Layout.preferredWidth
         Layout.fillHeight: true
 
@@ -198,15 +216,22 @@ PlasmoidItem {
         onYChanged: Qt.callLater(measure)
         onHeightChanged: Qt.callLater(measure)
         Window.onHeightChanged: Qt.callLater(measure)
+        // open, the island reaches over its neighbours in the bar: lift this applet above them
+        function raise() {
+            for (let p = slot; p && p.parent; p = p.parent)
+                p.z = 1000;
+        }
         Component.onCompleted: {
             Qt.callLater(measure);
+            Qt.callLater(raise);
             root.slotItem = slot;
             root.barHeight = Qt.binding(() => slot.winHeight);
         }
 
         Item {
             y: slot.winTop
-            width: slot.width
+            x: (slot.width - width) / 2
+            width: 720 + 2 * root.shapes.open.shoulder
             height: slot.winHeight
 
             IslandShape {
@@ -245,8 +270,8 @@ PlasmoidItem {
                 // .isle-header: 0 24 px 0 28 px
                 Header {
                     isle: root
-                    x: (parent.width - root.expandedWidth) / 2 + 28
-                    width: root.expandedWidth - 28 - 24
+                    x: 28
+                    width: parent.width - 28 - 24
                     height: root.barHeight
                     opacity: root.mode === "open" ? 1 : 0
                     visible: opacity > 0
@@ -272,7 +297,7 @@ PlasmoidItem {
     PlasmaCore.Dialog {
         id: island
 
-        readonly property int winWidth: root.expandedWidth + 2 * root.shapes.open.shoulder
+        readonly property int winWidth: 720 + 2 * root.shapes.open.shoulder
         readonly property real depth: springH.value - root.barHeight
         property point origin: Qt.point(0, 0)
 
@@ -343,14 +368,16 @@ PlasmoidItem {
                     // the open page under the header (.isle-page: 6 px 28 px 0)
                     Item {
                         anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 6 }
-                        width: root.expandedWidth - 56
+                        width: root.openWidth - 56
                         height: root.pageHeight - 6
                         opacity: root.mode === "open" ? 1 : 0
                         visible: opacity > 0
                         Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
 
                         MusicPage { isle: root; anchors.fill: parent; visible: root.page === "music" }
+                        NotificationsPage { isle: root; anchors.fill: parent; visible: root.page === "notifications" }
                         FocusPage { isle: root; anchors.fill: parent; visible: root.page === "focus" }
+                        RemindersPage { isle: root; anchors.fill: parent; visible: root.page === "reminders" }
                         CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
                     }
                 }

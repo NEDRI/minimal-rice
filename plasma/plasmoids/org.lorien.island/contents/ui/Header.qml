@@ -8,7 +8,9 @@ Item {
     property var isle
     readonly property var tabs: [
         { id: "music", icon: "isle-music", label: "Music" },
+        { id: "notifications", icon: "isle-bell", label: "Notifications" },
         { id: "focus", icon: "isle-timer", label: "Focus" },
+        { id: "reminders", icon: "isle-tasks", label: "Reminders" },
         { id: "calendar", icon: "isle-calendar", label: "Calendar" },
     ]
 

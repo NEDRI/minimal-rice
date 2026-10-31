@@ -11,9 +11,11 @@ Item {
     readonly property bool running: watcher.registered
 
     readonly property var nowPlaying: parse(media.properties.NowPlaying)
+    readonly property var lyrics: parse(media.properties.Lyrics)
     readonly property var pomodoro: parse(pomodoroProps.properties.State)
     readonly property var pomodoroConfig: parse(pomodoroProps.properties.Config)
     readonly property var system: parse(systemProps.properties.State)
+    readonly property var tasks: parse(todo.properties.Items)
 
     signal systemEvent(var event)
     signal phaseFinished(string finished, string next)
@@ -50,6 +52,7 @@ Item {
     Props { id: media; iface: "io.github.zickrian.isle.Media1" }
     Props { id: pomodoroProps; iface: "io.github.zickrian.isle.Pomodoro1" }
     Props { id: systemProps; iface: "io.github.zickrian.isle.System1" }
+    Props { id: todo; iface: "io.github.zickrian.isle.Todo1" }
 
     DBus.SignalWatcher {
         busType: DBus.BusType.Session
@@ -66,6 +69,10 @@ Item {
         function dbusPhaseFinished(finished, next) { daemon.phaseFinished(String(finished.value ?? finished), String(next.value ?? next)); }
     }
 
-    // isled (re)started: read everything again
-    onRunningChanged: if (running) { media.updateAll(); pomodoroProps.updateAll(); systemProps.updateAll(); }
+    // isled (re)started: read everything again, and ask for lyrics (Isle's lyrics-online, on by default)
+    onRunningChanged: if (running) {
+        media.updateAll(); pomodoroProps.updateAll(); systemProps.updateAll(); todo.updateAll();
+        call("Media1", "SetLyrics", [true], "b");
+    }
+    Component.onCompleted: if (running) call("Media1", "SetLyrics", [true], "b")
 }
