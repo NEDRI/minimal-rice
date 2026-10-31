@@ -88,6 +88,8 @@ if $kde; then
     rm -rf "$L/plasma/desktoptheme/lorien"; cp -a "$REPO/plasma/desktoptheme/lorien" "$L/plasma/desktoptheme/"
     cp "$REPO"/plasma/color-schemes/*.colors "$L/color-schemes/"
     cp -a "$REPO/plasma/panel-colorizer-presets/." "$HOME/.config/panel-colorizer/presets/"
+    mkdir -p "$L/kwin/scripts"
+    for k in "$REPO"/kwin/scripts/*; do rm -rf "$L/kwin/scripts/$(basename "$k")"; cp -a "$k" "$L/kwin/scripts/"; done
 fi
 if $gnome; then
     mkdir -p "$L/gnome-shell/extensions" "$HOME/.config/systemd/user"

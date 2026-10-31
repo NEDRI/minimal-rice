@@ -17,7 +17,8 @@ A dark, minimal look for **KDE Plasma 6** and **GNOME** on Arch (EndeavourOS, Ca
   - `Super+Q` closes the window;
   - `Super+Enter` opens Konsole;
   - `Super+Shift+S` takes a region screenshot;
-  - `Super+arrows` tile windows.
+  - `Super+arrows` tile windows;
+  - `Super+H` floats the window in the middle of the screen with even gaps (again puts it back).
 
 **GNOME**
 - Lorien Bar: a transparent top bar with black pills like the Isle island; when a menu is open, its button fills with the accent colour.

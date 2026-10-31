@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Description": "Super+H floats the active window in the middle of the screen, with even gaps to the bar and the dock; again puts it back",
+        "Id": "lorien-center",
+        "License": "GPL-3.0+",
+        "Name": "Lorien: centre window",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}
