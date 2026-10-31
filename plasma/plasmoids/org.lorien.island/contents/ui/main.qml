@@ -12,6 +12,7 @@ import QtQuick.Window
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.layershell as LayerShell
 import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.workspace.dbus as DBus
 import org.kde.plasma.private.volume as Vol
@@ -504,35 +505,36 @@ PlasmoidItem {
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
 
-    // ================================================================ the part in the bar
+    // ================================================================ closed: the notch in the bar
+    // The panel only ever shows the closed island. Hovered, peeking or open, the island is drawn by one
+    // window of its own on the overlay layer, from the top edge of the screen over the bar, starting from
+    // exactly this shape; so it is one surface, with nothing to come apart.
     fullRepresentation: Item {
         id: slot
 
-        // as wide as the widest closed island (music and the timer's time) and never another width, so the
-        // panel never moves its middle; open, it reaches over the empty spacers on either side
+        // never another width, so the panel never moves its middle
         Layout.preferredWidth: 400
         Layout.minimumWidth: Layout.preferredWidth
         Layout.fillHeight: true
 
         readonly property bool hovered: slotHover.hovered
 
-        // the panel window's top in this item's coordinates, so the island hangs from the screen edge even
-        // when the panel gives the widget a margin; the bar as drawn is 36 px of a slightly taller window
+        // the panel window's top in this item's coordinates: the notch hangs from the screen edge even when
+        // the panel gives the widget a margin; the bar as drawn is 36 px of a slightly taller window
         property real winTop: 0
         readonly property real winHeight: Math.min(Window.height > 0 ? Window.height : height, 36)
-        function measure() { winTop = -mapToItem(null, 0, 0).y; }
+        function measure() {
+            winTop = -mapToItem(null, 0, 0).y;
+            root.slotCenter = Math.round(mapToGlobal(width / 2, 0).x);
+        }
         onYChanged: Qt.callLater(measure)
-        Timer { interval: 2000; running: true; repeat: true; onTriggered: slot.measure() }
+        onXChanged: Qt.callLater(measure)
+        onWidthChanged: Qt.callLater(measure)
         onHeightChanged: Qt.callLater(measure)
         Window.onHeightChanged: Qt.callLater(measure)
-        // open, the island reaches over its neighbours in the bar: lift this applet above them
-        function raise() {
-            for (let p = slot; p && p.parent; p = p.parent)
-                p.z = 1000;
-        }
+        Timer { interval: 1000; running: true; repeat: true; onTriggered: slot.measure() }
         Component.onCompleted: {
             Qt.callLater(measure);
-            Qt.callLater(raise);
             root.slotItem = slot;
             root.barHeight = Qt.binding(() => slot.winHeight);
         }
@@ -540,14 +542,15 @@ PlasmoidItem {
         Item {
             y: slot.winTop
             x: (slot.width - width) / 2
-            width: 720 + 2 * root.shapes.open.shoulder
+            width: slot.width
             height: slot.winHeight
+            // hidden while the overlay window draws the island
+            opacity: root.overlayShown ? 0 : 1
 
             IslandShape {
                 anchors.fill: parent
-                bodyWidth: springW.value; bodyHeight: springH.value; radius: springR.value; shoulder: springS.value
+                bodyWidth: springW.value; bodyHeight: root.barHeight; radius: root.shapes.closed.radius; shoulder: root.shapes.closed.shoulder
             }
-
             Item {
                 x: (parent.width - springW.value) / 2
                 width: springW.value
@@ -562,13 +565,95 @@ PlasmoidItem {
                     onClicked: mouse => {
                         if (mouse.button === Qt.MiddleButton && root.hasTrack)
                             isled.call("Media1", "PlayPause");
+                        else
+                            root.open();
+                    }
+                }
+                CompactRow {
+                    isle: root
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 2 * Math.round(root.closedWidth / 2)
+                    height: root.barHeight
+                }
+            }
+        }
+    }
+
+    property Item slotItem: null
+    property int slotCenter: 0
+    // the overlay has drawn its first frame: the bar's notch can go
+    property bool overlayShown: false
+
+    // ================================================================ everything else: one overlay window
+    Window {
+        id: island
+
+        readonly property int winWidth: 720 + 2 * root.shapes.open.shoulder
+        readonly property bool needed: root.mode !== "closed"
+            || !(springW.settled && springH.settled && springR.settled && springS.settled)
+
+        // tall enough for where the island is and where it is going
+        width: winWidth
+        height: Math.ceil(Math.max(springH.value, root.target.height, root.barHeight)) + 4
+        color: "transparent"
+        flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus * (root.keyboardWanted ? 0 : 1)
+        visible: needed
+
+        // on the overlay layer, at the screen's top edge over the bar, centred on the bar's notch; it takes
+        // the keyboard only when the island asks for it
+        LayerShell.Window.scope: "lorien-island"
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
+        LayerShell.Window.margins.left: Math.max(0, root.slotCenter - winWidth / 2)
+        LayerShell.Window.exclusionZone: -1
+        // the assistant (Super+I) takes the keyboard while it is open; a field gets it when clicked
+        LayerShell.Window.keyboardInteractivity: root.mode === "assistant" ? LayerShell.Window.KeyboardInteractivityExclusive
+            : root.keyboardWanted ? LayerShell.Window.KeyboardInteractivityOnDemand : LayerShell.Window.KeyboardInteractivityNone
+
+        onVisibleChanged: if (!visible) root.overlayShown = false
+        onFrameSwapped: if (visible && !root.overlayShown) root.overlayShown = true
+        onActiveChanged: if (!active && (root.mode === "open" || root.mode === "assistant") && root.keyboardWanted) root.close()
+
+        Item {
+            anchors.fill: parent
+            focus: true
+            Keys.onEscapePressed: root.close()
+
+            // a click beside the island closes it
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+
+            IslandShape {
+                width: parent.width
+                height: springH.value
+                bodyWidth: springW.value; bodyHeight: springH.value; radius: springR.value; shoulder: springS.value
+            }
+
+            Item {
+                id: body
+                x: (parent.width - springW.value) / 2
+                width: springW.value
+                height: springH.value
+                clip: true
+
+                HoverHandler { id: islandHover }
+                // clicks on the island stay on it; on an alert they open what it is about
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.MiddleButton && root.hasTrack)
+                            isled.call("Media1", "PlayPause");
                         else if (root.mode === "peek")
                             root.activateAlert();
-                        else
-                            root.mode === "open" ? root.close() : root.open();
+                        else if (root.mode === "closed")
+                            root.open();
                     }
                 }
 
+                // closed (springing in or out): the same row as the bar's notch
                 CompactRow {
                     isle: root
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -623,122 +708,37 @@ PlasmoidItem {
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
                 }
-            }
-        }
-    }
 
-    property Item slotItem: null
-    // the part below the bar keeps under the bar's part, wherever the panel puts it
-    Timer { interval: 500; repeat: true; running: island.visible; onTriggered: island.place() }
+                // the open page under the header (.isle-page: 6 px 28 px 0)
+                Item {
+                    anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: root.barHeight + 6 }
+                    width: root.openWidth - 56
+                    height: root.pageHeight - 6
+                    opacity: root.mode === "open" ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
 
-    // ================================================================ the part below the bar
-    PlasmaCore.Dialog {
-        id: island
-
-        readonly property int winWidth: 720 + 2 * root.shapes.open.shoulder
-        readonly property real depth: springH.value - root.barHeight
-        property point origin: Qt.point(0, 0)
-
-        // as Plasma's notification popups: shown without taking the keyboard from the window you type in
-        type: PlasmaCore.Dialog.Notification
-        location: PlasmaCore.Types.Floating
-        backgroundHints: PlasmaCore.Dialog.NoBackground
-        // never focused by being shown: only when the island asks for the keyboard (see wantKeyboard)
-        flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | (root.keyboardWanted ? 0 : Qt.WindowDoesNotAcceptFocus)
-        hideOnWindowDeactivate: false
-        visible: root.mode !== "closed" || depth > 0.5
-        x: origin.x
-        y: origin.y
-
-        function place() {
-            if (!root.slotItem)
-                return;
-            // the panel may have moved the widget since (its margins come later): measure again
-            root.slotItem.measure();
-            const p = root.slotItem.mapToGlobal(root.slotItem.width / 2, root.slotItem.winTop + root.barHeight);
-            origin = Qt.point(Math.round(p.x - winWidth / 2), Math.round(p.y));
-        }
-        onVisibleChanged: if (visible) place()
-        onActiveChanged: if (!active && (root.mode === "open" || root.mode === "assistant")) root.close()
-
-        mainItem: Item {
-            width: island.winWidth
-            height: root.pageHeight + root.bottomPadding + 20
-            focus: true
-            Keys.onEscapePressed: root.close()
-
-            // a click beside the island closes it
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.close()
-            }
-
-            Item {
-                width: parent.width
-                height: Math.max(0, island.depth) + 2
-                clip: true
-
-                // the same outline as in the bar, shifted up by the bar's height
-                IslandShape {
-                    y: -root.barHeight
-                    width: parent.width
-                    height: springH.value
-                    bodyWidth: springW.value; bodyHeight: springH.value; radius: springR.value; shoulder: springS.value
+                    MusicPage { isle: root; anchors.fill: parent; visible: root.page === "music" }
+                    NotificationsPage { isle: root; anchors.fill: parent; visible: root.page === "notifications" }
+                    FocusPage { isle: root; anchors.fill: parent; visible: root.page === "focus" }
+                    RemindersPage { isle: root; anchors.fill: parent; visible: root.page === "reminders" }
+                    ShelfPage { isle: root; anchors.fill: parent; visible: root.page === "shelf" }
+                    CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
+                    AppsPage { isle: root; anchors.fill: parent; visible: root.page === "apps" }
+                    UsagePage { isle: root; anchors.fill: parent; visible: root.page === "usage" }
                 }
 
-                Item {
-                    x: (parent.width - springW.value) / 2
-                    width: springW.value
-                    height: Math.max(0, island.depth)
-                    clip: true
-
-                    HoverHandler { id: islandHover }
-                    // clicks on the island stay on it; on an alert they open what it is about
-                    MouseArea { anchors.fill: parent; onClicked: if (root.mode === "peek") root.activateAlert() }
-
-                    Peek {
-                        isle: root
-                        alert: root.alert
-                        y: -root.barHeight
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.target.width
-                        height: peekMeasure.preferredHeight
-                    onCloseRequested: root.dismissAlert()
-                        opacity: root.mode === "peek" ? 1 : 0
-                        visible: opacity > 0
-                        Behavior on opacity { NumberAnimation { duration: root.mode === "peek" ? 320 : 160 } }
-                    }
-
-                    // the open page under the header (.isle-page: 6 px 28 px 0)
-                    Item {
-                        anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 6 }
-                        width: root.openWidth - 56
-                        height: root.pageHeight - 6
-                        opacity: root.mode === "open" ? 1 : 0
-                        visible: opacity > 0
-                        Behavior on opacity { NumberAnimation { duration: root.mode === "open" ? 320 : 160 } }
-
-                        MusicPage { isle: root; anchors.fill: parent; visible: root.page === "music" }
-                        NotificationsPage { isle: root; anchors.fill: parent; visible: root.page === "notifications" }
-                        FocusPage { isle: root; anchors.fill: parent; visible: root.page === "focus" }
-                        RemindersPage { isle: root; anchors.fill: parent; visible: root.page === "reminders" }
-                        ShelfPage { isle: root; anchors.fill: parent; visible: root.page === "shelf" }
-                        CalendarPage { isle: root; anchors.fill: parent; visible: root.page === "calendar" }
-                        AppsPage { isle: root; anchors.fill: parent; visible: root.page === "apps" }
-                        UsagePage { isle: root; anchors.fill: parent; visible: root.page === "usage" }
-                    }
-
-                    // the assistant, under its header in the bar; kept while closed, so the chat stays
-                    AssistantView {
-                        id: assistantView
-                        isle: root
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.expandedWidth
-                        height: contentHeight
-                        opacity: root.mode === "assistant" ? 1 : 0
-                        visible: opacity > 0
-                        Behavior on opacity { NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } }
-                    }
+                // the assistant, under its header; kept while closed, so the chat stays
+                AssistantView {
+                    id: assistantView
+                    isle: root
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: root.barHeight
+                    width: root.expandedWidth
+                    height: contentHeight
+                    opacity: root.mode === "assistant" ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: root.mode === "assistant" ? 320 : 160 } }
                 }
             }
         }
