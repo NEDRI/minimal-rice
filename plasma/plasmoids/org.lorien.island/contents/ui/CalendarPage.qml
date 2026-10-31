@@ -155,7 +155,7 @@ Item {
                 radius: height / 2
                 color: field.activeFocus ? "#2c2c2e" : "#1c1c1e"
                 IsleIcon { id: plus; x: 12; anchors.verticalCenter: parent.verticalCenter; name: "isle-plus-symbolic"; size: 13; opacity: 0.55 }
-                TextInput { renderType: Text.QtRendering;
+                TextInput { renderType: Text.QtRendering; TapHandler { onTapped: isle.wantKeyboard() }
                     id: field
                     anchors { left: plus.right; leftMargin: 8; right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
                     color: "white"

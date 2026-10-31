@@ -132,7 +132,7 @@ Item {
                                         width: row.ticked ? Math.min(title.contentWidth, parent.width) : 0
                                         Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
                                     }
-                                    TextInput { renderType: Text.QtRendering;
+                                    TextInput { renderType: Text.QtRendering; TapHandler { onTapped: isle.wantKeyboard() }
                                         id: field
                                         y: 3
                                         width: parent.width
@@ -201,7 +201,7 @@ Item {
                         border.width: 1.5
                         border.color: Qt.rgba(1, 1, 1, 0.14)
                     }
-                    TextInput { renderType: Text.QtRendering;
+                    TextInput { renderType: Text.QtRendering; TapHandler { onTapped: isle.wantKeyboard() }
                         id: field
                         Layout.fillWidth: true
                         color: "white"

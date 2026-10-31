@@ -130,7 +130,6 @@ PlasmoidItem {
         if (p)
             page = p;
         mode = "open";
-        Qt.callLater(() => island.requestActivate());
     }
     // the assistant: from the header's sparkle, or Super+I (the widget's shortcut)
     function openAssistant() {
@@ -139,6 +138,8 @@ PlasmoidItem {
         Qt.callLater(() => { island.requestActivate(); assistantView.focusField(); });
     }
     Plasmoid.onActivated: mode === "assistant" ? close() : openAssistant()
+    // the keyboard only when asked for: a click into one of the island's fields, or the assistant (as Isle)
+    function wantKeyboard() { island.requestActivate(); }
     function close() {
         expandTimer.stop();
         collapseTimer.stop();
@@ -628,7 +629,8 @@ PlasmoidItem {
         readonly property real depth: springH.value - root.barHeight
         property point origin: Qt.point(0, 0)
 
-        type: PlasmaCore.Dialog.AppletPopup
+        // as Plasma's notification popups: shown without taking the keyboard from the window you type in
+        type: PlasmaCore.Dialog.Notification
         location: PlasmaCore.Types.Floating
         backgroundHints: PlasmaCore.Dialog.NoBackground
         flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint

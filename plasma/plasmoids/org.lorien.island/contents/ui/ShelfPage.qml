@@ -98,7 +98,7 @@ Item {
                     radius: height / 2
                     color: search.activeFocus ? "#2c2c2e" : "#1c1c1e"
                     IsleIcon { id: searchIcon; x: 12; anchors.verticalCenter: parent.verticalCenter; name: "isle-search"; size: 12; opacity: 0.55 }
-                    TextInput { renderType: Text.QtRendering;
+                    TextInput { renderType: Text.QtRendering; TapHandler { onTapped: isle.wantKeyboard() }
                         id: search
                         anchors { left: searchIcon.right; leftMargin: 6; right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
                         color: "white"
