@@ -661,7 +661,9 @@ PlasmoidItem {
                     height: root.barHeight
                     opacity: root.mode === "closed" ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.mode === "closed" ? 120 : 0 } NumberAnimation { duration: root.mode === "closed" ? 320 : 160 } } }
+                    // leaving the closed island it goes at once: the overlay window may only just be showing, and a fade
+                    // started before its first frame would keep the clock over what comes in; it fades back in as Isle's
+                    Behavior on opacity { enabled: root.mode === "closed"; SequentialAnimation { PauseAnimation { duration: 120 } NumberAnimation { duration: 320 } } }
                 }
                 // .isle-header: 0 24 px 0 28 px
                 Header {
