@@ -23,6 +23,8 @@ for icons in Qogir-Dark Qogir-dark Papirus-Dark; do
     fi
 done
 plasma-apply-desktoptheme lorien >/dev/null
+# GTK apps, and Electron apps that judge "system" dark by the GTK theme's name, get Breeze-Dark
+qdbus6 org.kde.kded6 /GtkConfig org.kde.GtkConfig.setGtkTheme Breeze-Dark >/dev/null 2>&1 || true
 kw konsolerc "Desktop Entry" DefaultProfile Lorien.profile
 
 # ---- window borders: KDE Rounded Corners in the accent (accent-from-wallpaper.py sets the colour) ----
