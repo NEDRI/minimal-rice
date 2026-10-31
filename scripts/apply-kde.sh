@@ -37,7 +37,7 @@ done
 kw kwinrc Plugins kwin4_effect_shapecornersEnabled true
 kw kwinrc Plugins dynamic_workspacesEnabled true
 
-# ---- shortcuts: Super+Q close, Super+Enter Konsole, Super+Shift+S screenshot, Super+arrows tile ----
+# ---- shortcuts: Super+Q close, Super+Enter Konsole, Super+Shift+S screenshot, Super+arrows tile, Super+I island ----
 kw kglobalshortcutsrc kwin "Window Close" "Alt+F4	Meta+Q,Alt+F4,Close Window"
 for d in Left Right Top:Up Bottom:Down; do
     name="${d%%:*}"; key="${d#*:}"
@@ -45,6 +45,8 @@ for d in Left Right Top:Up Bottom:Down; do
 done
 kw2 kglobalshortcutsrc services org.kde.konsole.desktop _launch "Ctrl+Alt+T	Meta+Return"
 kw2 kglobalshortcutsrc services org.kde.spectacle.desktop RectangularRegionScreenShot "Meta+Shift+S"
+# Super+I opens the island's assistant, as in Isle; System Settings keeps its Tools key
+kw2 kglobalshortcutsrc services systemsettings.desktop _launch "Tools,Tools,System Settings"
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
 
 # ---- panels and desktop tiles ----
