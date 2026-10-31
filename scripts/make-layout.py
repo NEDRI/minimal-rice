@@ -151,9 +151,7 @@ layout = {
         ["luisbocanegra.panel.colorizer", {"General": dict(hideWidget=True, **top_cfg)}],
     ],
     "dock": [
-        ["plasmusic-toolbar", {"General": {
-            "albumCoverRadius": 6, "albumPosition": 2, "fallbackToIconWhenArtNotAvailable": True,
-            "panelControlsSizeRatio": 0.9, "panelIconSizeRatio": 1, "titlePosition": 2, "useAlbumCoverAsPanelIcon": True}}],
+        # music shows in the island (org.lorien.island) on the top bar
         ["org.linexin.launcher", {}],
         ["org.kde.plasma.icontasks", {"General": {"launchers": ",".join(l for l in [
             "applications:systemsettings.desktop",
