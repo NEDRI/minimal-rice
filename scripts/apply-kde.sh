@@ -7,6 +7,13 @@ HERE="$(dirname "$(readlink -f "$0")")"
 kw() { kwriteconfig6 --file "$1" --group "$2" --key "$3" "$4"; }
 kw2() { kwriteconfig6 --file "$1" --group "$2" --group "$3" --key "$4" "$5"; }
 
+# the top bar's menu button, as the Apple menu: the distro's logo in white
+for logo in /usr/share/pixmaps/endeavouros-icon.png /usr/share/pixmaps/cachyos.svg /usr/share/pixmaps/archlinux-logo.svg; do
+    if [ -f "$logo" ]; then
+        magick -background none "$logo" -strip -trim +repage -channel RGB -fill white -colorize 100 +channel \
+            -resize 180x180 -gravity center -extent 280x280 "PNG32:$HERE/menu-logo.png" 2>/dev/null && break
+    fi
+done
 python3 -I "$HERE/make-layout.py"
 python3 -I "$HERE/make-plasma-style.py"
 

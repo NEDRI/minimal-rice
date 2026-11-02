@@ -121,19 +121,15 @@ try:
 except OSError:
     WEATHER_STATION = ""
 
+# the menu button: the distro logo in white, like the Apple menu (apply-kde.sh makes it; Plasma's icon otherwise)
+LOGO = os.path.join(HERE, "menu-logo.png")
+MENU_BUTTON = {"useCustomButtonImage": True, "customButtonImage": LOGO, "showRecentApps": False,
+               "showRecentDocs": False} if os.path.exists(LOGO) else {"icon": "start-here-kde-symbolic"}
+
 layout = {
     "top": [
-        ["org.kde.plasma.digitalclock", {"Appearance": {
-            "showDate": False, "showSeconds": 0, "use24hFormat": 2,
-            "autoFontAndSize": False, "fontFamily": "JetBrainsMono Nerd Font", "fontWeight": 700, "fontSize": 11}}],
-        ["org.lorien.cpu", {}],
-        ["org.lorien.cpu", {"General": {"sensorId": "memory/physical/usedPercent", "icon": "\U000f035b", "title": "RAM", "decimals": 0}}],
-        ["org.lorien.cpu", {"General": {"sensorId": "network/all/download", "icon": "\U000f01da", "title": "Download", "unit": "formatted"}}],
-        ["org.lorien.cpu", {"General": {"sensorId": "network/all/upload", "icon": "\U000f0552", "title": "Upload", "unit": "formatted"}}],
-    ] + ([
-        ["org.lorien.cpu", {"General": {"sensorId": "power/0001/chargePercentage", "icon": "\U000f0079", "title": "Battery", "decimals": 0}}],
-    ] if HAS_BATTERY else []) + [
-        ["org.dhruv8sh.kara", {"general": {"spacing": 4, "type": 0}}],
+        # left, as on a Mac: the system menu behind the distro logo, then the active app's menus
+        ["org.kde.plasma.kicker", {"General": MENU_BUTTON}],
         ["org.kde.plasma.appmenu", {}],
         ["org.kde.plasma.panelspacer", {}],
         # the island (org.lorien.island, after Isle for GNOME) in the middle; it hangs from the
@@ -144,7 +140,18 @@ layout = {
             "visualizerStyle": 0, "barCount": 32, "barWidth": 3, "barGap": 2, "roundedBars": True,
             "length": 170, "noiseReduction": 77, "hideToolTip": True,
             "barColors": json.dumps({"enabled": True, "sourceType": 1, "systemColor": "highlightColor", "systemColorSet": "View"})}}],
+        ["org.lorien.cpu", {}],
+        ["org.lorien.cpu", {"General": {"sensorId": "memory/physical/usedPercent", "icon": "\U000f035b", "title": "RAM", "decimals": 0}}],
+        ["org.lorien.cpu", {"General": {"sensorId": "network/all/download", "icon": "\U000f01da", "title": "Download", "unit": "formatted"}}],
+        ["org.lorien.cpu", {"General": {"sensorId": "network/all/upload", "icon": "\U000f0552", "title": "Upload", "unit": "formatted"}}],
+    ] + ([
+        ["org.lorien.cpu", {"General": {"sensorId": "power/0001/chargePercentage", "icon": "\U000f0079", "title": "Battery", "decimals": 0}}],
+    ] if HAS_BATTERY else []) + [
+        ["org.dhruv8sh.kara", {"general": {"spacing": 4, "type": 0}}],
         ["org.kde.plasma.systemtray", {"General": {"iconSpacing": 1}}],
+        ["org.kde.plasma.digitalclock", {"Appearance": {
+            "showDate": False, "showSeconds": 0, "use24hFormat": 2,
+            "autoFontAndSize": False, "fontFamily": "JetBrainsMono Nerd Font", "fontWeight": 700, "fontSize": 11}}],
         ["org.kde.plasma.lock_logout", {"General": {
             "show_lockScreen": True, "show_requestReboot": True, "show_requestShutDown": True,
             "show_requestLogoutScreen": False, "show_switchUser": False}}],
