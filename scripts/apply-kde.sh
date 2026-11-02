@@ -39,6 +39,7 @@ done
 kw kwinrc Plugins kwin4_effect_shapecornersEnabled true
 kw kwinrc Plugins dynamic_workspacesEnabled true
 kw kwinrc Plugins lorien-centerEnabled true   # Super+H: the window floats in the middle with gaps
+kw kwinrc Plugins lorien-tidy-desktopsEnabled true   # at login: no empty desktops before the windows
 
 # ---- shortcuts: Super+Q close, Super+Enter Konsole, Super+Shift+S screenshot, Super+arrows tile, Super+I island ----
 kw kglobalshortcutsrc kwin "Window Close" "Alt+F4	Meta+Q,Alt+F4,Close Window"

@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [{ "Name": "lorien-rice" }],
+        "Description": "At login, removes the empty desktops KWin restored from the last session, keeping one empty desktop at the end, as dynamic workspaces do",
+        "Id": "lorien-tidy-desktops",
+        "License": "GPL-3.0+",
+        "Name": "Lorien: tidy desktops at login",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}
