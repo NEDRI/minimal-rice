@@ -5,7 +5,7 @@ A dark, minimal look for **KDE Plasma 6** and **GNOME** on Arch (EndeavourOS, Ca
 ## What you get
 
 **KDE Plasma**
-- Transparent top bar with "islands" (Panel Colorizer), laid out like macOS: the distro logo with the app menu and the active app's menus (File, Edit, ...) on the left; CPU, RAM, network, battery, tray and the clock on the right; an audio visualizer.
+- Transparent top bar with "islands" (Panel Colorizer): CPU, RAM, network, battery and an audio visualizer.
 - Island: [Isle](https://github.com/zickrian/isle)'s notch for KDE, following Isle's own code and fed by its background service `isled`. Closed, it hangs from the top edge of the screen with the time, the album art and dancing bars, or the focus timer's ring. Rest the pointer on it (or click) and it springs open into Isle's pages: Music (with synced lyrics and volume/outputs), Notifications (Plasma's history, Do Not Disturb), Focus, Reminders, Shelf (clipboard history via Klipper, and files to drag), Calendar, Apps (time per app) and Usage (Claude/Codex/Grok plan limits). Its alerts replace Plasma's OSD (volume, brightness, microphone, Caps Lock) and notification banners. The sparkle in its header, or `Super+I`, opens a chat with Claude Code (`claude -p`, no tools that change anything); needs Claude Code signed in.
 - Floating dock at the bottom.
 - Minimal desktop tiles in two columns along the screen edges:
