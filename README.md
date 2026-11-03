@@ -16,7 +16,7 @@ A dark, minimal look for **KDE Plasma 6** and **GNOME** on Arch (EndeavourOS, Ca
 - Shortcuts:
   - `Super+Q` closes the window;
   - `Super+Enter` opens Konsole;
-  - `Super+D` opens the app launcher (rofi, as in Hyprland): apps, open windows and commands, Tab switches; `Super+D` or Esc closes it;
+  - `Super+B` opens the app launcher (rofi, as in Hyprland): apps, open windows and commands, Tab switches; `Super+B` or Esc closes it;
   - `Super+Shift+S` takes a region screenshot;
   - `Super+arrows` tile windows;
   - `Super+H` floats the window in the middle of the screen with even gaps (again puts it back).

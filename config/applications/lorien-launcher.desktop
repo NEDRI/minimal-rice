@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Lorien launcher
-Comment=App menu like in Hyprland (rofi); Super+D opens and closes it
+Comment=App menu like in Hyprland (rofi); Super+B opens and closes it
 Exec=sh -c "pkill -x rofi || rofi -show drun"
 Icon=search
 NoDisplay=true

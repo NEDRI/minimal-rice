@@ -119,7 +119,7 @@ def apply(rgb):
     except OSError:
         pass
     (apply_gnome if DESKTOP == "GNOME" else apply_kde)(rgb, hexc)
-    # the rofi launcher (Super+D) reads the accent from here each time it opens
+    # the rofi launcher (Super+B) reads the accent from here each time it opens
     rofi = os.path.expanduser("~/.config/rofi/lorien-accent.rasi")
     os.makedirs(os.path.dirname(rofi), exist_ok=True)
     open(rofi, "w").write("* { accent: %s; }\n" % hexc)
