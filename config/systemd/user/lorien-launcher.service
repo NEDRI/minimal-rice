@@ -1,0 +1,6 @@
+[Unit]
+Description=Lorien launcher (rofi, Super+D)
+
+[Service]
+Type=exec
+ExecStart=rofi -show drun

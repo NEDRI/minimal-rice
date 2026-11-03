@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "lorien-launcher",
+        "Name": "Lorien launcher",
+        "Description": "Super+D opens the rofi app launcher, as in Hyprland; again closes it",
+        "Authors": [{ "Name": "lorien-rice" }],
+        "License": "GPL-3.0-or-later",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}

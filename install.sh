@@ -91,9 +91,10 @@ if $kde; then
     mkdir -p "$L/kwin/scripts"
     for k in "$REPO"/kwin/scripts/*; do rm -rf "$L/kwin/scripts/$(basename "$k")"; cp -a "$k" "$L/kwin/scripts/"; done
     # Super+D: the rofi app launcher, as in Hyprland
-    mkdir -p "$HOME/.config/rofi" "$L/applications"
+    mkdir -p "$HOME/.config/rofi" "$HOME/.config/systemd/user"
     cp "$REPO/config/rofi/config.rasi" "$HOME/.config/rofi/"
-    cp "$REPO/config/applications/lorien-launcher.desktop" "$L/applications/"
+    cp "$REPO/config/systemd/user/lorien-launcher.service" "$HOME/.config/systemd/user/"
+    systemctl --user daemon-reload 2>/dev/null || true
 fi
 if $gnome; then
     mkdir -p "$L/gnome-shell/extensions" "$HOME/.config/systemd/user"
