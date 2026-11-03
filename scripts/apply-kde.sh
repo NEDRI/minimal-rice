@@ -41,7 +41,7 @@ kw kwinrc Plugins dynamic_workspacesEnabled true
 kw kwinrc Plugins lorien-centerEnabled true   # Super+H: the window floats in the middle with gaps
 kw kwinrc Plugins lorien-tidy-desktopsEnabled true   # at login: no empty desktops before the windows
 
-# ---- shortcuts: Super+Q close, Super+Enter Konsole, Super+Shift+S screenshot, Super+arrows tile, Super+I island ----
+# ---- shortcuts: Super+Q close, Super+D launcher, Super+Enter Konsole, Super+Shift+S screenshot, Super+arrows tile, Super+I island ----
 kw kglobalshortcutsrc kwin "Window Close" "Alt+F4	Meta+Q,Alt+F4,Close Window"
 for d in Left Right Top:Up Bottom:Down; do
     name="${d%%:*}"; key="${d#*:}"
@@ -49,6 +49,9 @@ for d in Left Right Top:Up Bottom:Down; do
 done
 kw2 kglobalshortcutsrc services org.kde.konsole.desktop _launch "Ctrl+Alt+T	Meta+Return"
 kw2 kglobalshortcutsrc services org.kde.spectacle.desktop RectangularRegionScreenShot "Meta+Shift+S"
+# Super+D opens the rofi launcher (Hyprland-style) instead of KWin's Peek at Desktop
+kw kglobalshortcutsrc kwin "Show Desktop" "none,Meta+D,Peek at Desktop"
+kw2 kglobalshortcutsrc services lorien-launcher.desktop _launch "Meta+D"
 # Super+I opens the island's assistant, as in Isle; System Settings keeps its Tools key
 kw2 kglobalshortcutsrc services systemsettings.desktop _launch "Tools,Tools,System Settings"
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true

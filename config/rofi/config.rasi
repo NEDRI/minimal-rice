@@ -1,0 +1,101 @@
+// Lorien launcher (Super+D): apps, open windows and commands, in the rice's black pills
+// with the wallpaper accent (lorien-accent.rasi, written by accent-from-wallpaper.py).
+configuration {
+    modi: "drun,window,run";
+    show-icons: true;
+    icon-theme: "Qogir-Dark";
+    font: "JetBrainsMono Nerd Font 11";
+    drun-display-format: "{name}";
+    display-drun: "";
+    display-window: "";
+    display-run: "";
+    matching: "fuzzy";
+    sort: true;
+    sorting-method: "fzf";
+    case-sensitive: false;
+    terminal: "konsole";
+    window-format: "{c}  {t}";
+    kb-mode-next: "Tab";
+    kb-mode-previous: "ISO_Left_Tab";
+    kb-row-tab: "";
+    kb-element-next: "";
+    kb-element-prev: "";
+    kb-cancel: "Escape,Super+d";
+}
+
+* {
+    accent: #b589d6;
+    bg: #0b0b0bf7;
+    pill: #1c1c1c;
+    fg: #e6e6e6;
+    dim: #7a7a7a;
+    background-color: transparent;
+    text-color: @fg;
+}
+@import "lorien-accent.rasi"
+
+window {
+    width: 560px;
+    location: center;
+    anchor: center;
+    border: 2px;
+    border-color: @accent;
+    border-radius: 14px;
+    background-color: @bg;
+    padding: 14px;
+}
+
+mainbox {
+    spacing: 12px;
+    children: [ inputbar, listview, mode-switcher ];
+}
+
+inputbar {
+    background-color: @pill;
+    border-radius: 10px;
+    padding: 10px 14px;
+    spacing: 10px;
+    children: [ entry ];
+}
+prompt { text-color: @accent; }
+entry {
+    placeholder: "Szukaj…";
+    placeholder-color: @dim;
+    cursor: text;
+}
+
+listview {
+    lines: 8;
+    columns: 1;
+    fixed-height: true;
+    scrollbar: false;
+    spacing: 4px;
+}
+element {
+    padding: 8px 12px;
+    border-radius: 9px;
+    spacing: 12px;
+}
+element-icon { size: 22px; vertical-align: 0.5; }
+element-text { vertical-align: 0.5; highlight: bold underline; }
+element selected.normal, element selected.active, element selected.urgent {
+    background-color: @accent;
+    text-color: #0b0b0b;
+}
+element normal.normal, element alternate.normal, element normal.urgent, element alternate.urgent {
+    background-color: transparent;
+    text-color: @fg;
+}
+element normal.active, element alternate.active { background-color: transparent; text-color: @accent; }
+element-icon, element-text { background-color: transparent; text-color: inherit; }
+
+mode-switcher { spacing: 6px; }
+button {
+    padding: 6px;
+    border-radius: 8px;
+    background-color: @pill;
+    text-color: @dim;
+}
+button selected { background-color: @accent; text-color: #0b0b0b; }
+
+message { padding: 8px 12px; border-radius: 9px; background-color: @pill; }

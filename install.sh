@@ -63,7 +63,7 @@ mkdir -p "$BACKUP"
 for rel in .config/kdeglobals .config/kwinrc .config/kglobalshortcutsrc .config/konsolerc .config/plasmarc \
            .config/plasmashellrc .config/plasma-org.kde.plasma.desktop-appletsrc \
            .config/environment.d/20-lorien-decorations.conf .config/autostart/lorien-accent.desktop \
-           .config/autostart/waywallen.desktop .local/bin/updateall; do
+           .config/autostart/waywallen.desktop .config/rofi/config.rasi .local/bin/updateall; do
     [[ -e "$HOME/$rel" ]] && { mkdir -p "$BACKUP/$(dirname "$rel")"; cp -a "$HOME/$rel" "$BACKUP/$rel"; }
 done
 command -v dconf >/dev/null && dconf dump / > "$BACKUP/dconf.ini" || true
@@ -90,6 +90,10 @@ if $kde; then
     cp -a "$REPO/plasma/panel-colorizer-presets/." "$HOME/.config/panel-colorizer/presets/"
     mkdir -p "$L/kwin/scripts"
     for k in "$REPO"/kwin/scripts/*; do rm -rf "$L/kwin/scripts/$(basename "$k")"; cp -a "$k" "$L/kwin/scripts/"; done
+    # Super+D: the rofi app launcher, as in Hyprland
+    mkdir -p "$HOME/.config/rofi" "$L/applications"
+    cp "$REPO/config/rofi/config.rasi" "$HOME/.config/rofi/"
+    cp "$REPO/config/applications/lorien-launcher.desktop" "$L/applications/"
 fi
 if $gnome; then
     mkdir -p "$L/gnome-shell/extensions" "$HOME/.config/systemd/user"

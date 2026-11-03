@@ -8,7 +8,7 @@ The wallpaper is Waywallen's (Wallpaper Engine) when it runs, otherwise the desk
   accent-from-wallpaper.py IMAGE      apply the accent of an image file (for testing)
 
 The colour goes to the KDE colour scheme (Plasma, panel pills, desktop tiles and their borders
-follow its highlight colour), the window border effect and the binary clock widget. In GNOME it
+follow its highlight colour), the window border effect, the binary clock widget and the rofi launcher. In GNOME it
 sets the nearest of GNOME's accent colours and the exact colour on the dock's running-app dots.
 """
 import colorsys, configparser, math, os, sqlite3, subprocess, sys
@@ -119,6 +119,10 @@ def apply(rgb):
     except OSError:
         pass
     (apply_gnome if DESKTOP == "GNOME" else apply_kde)(rgb, hexc)
+    # the rofi launcher (Super+D) reads the accent from here each time it opens
+    rofi = os.path.expanduser("~/.config/rofi/lorien-accent.rasi")
+    os.makedirs(os.path.dirname(rofi), exist_ok=True)
+    open(rofi, "w").write("* { accent: %s; }\n" % hexc)
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     open(STATE, "w").write(hexc + "\n")
     print("accent", hexc)
