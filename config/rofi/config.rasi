@@ -1,4 +1,4 @@
-// Lorien launcher (Super+B): apps, open windows and commands, in the rice's black pills
+// Lorien launcher (Super+D): apps, open windows and commands, in the rice's black pills
 // with the wallpaper accent (lorien-accent.rasi, written by accent-from-wallpaper.py).
 configuration {
     modi: "drun,window,run";
@@ -20,7 +20,7 @@ configuration {
     kb-row-tab: "";
     kb-element-next: "";
     kb-element-prev: "";
-    kb-cancel: "Escape,Super+b";
+    kb-cancel: "Escape,Super+d";
 }
 
 * {
