@@ -142,6 +142,7 @@ if $build; then
         fi
         git clone --depth 1 https://github.com/Petexy/Linexin-Launcher.git "$tmp/linexin"
         kpackagetool6 -t Plasma/Applet -u "$tmp/linexin/package" 2>/dev/null || kpackagetool6 -t Plasma/Applet -i "$tmp/linexin/package"
+        python3 -I "$REPO/patches/linexin/recent-view.py" "$L/plasma/plasmoids/org.linexin.launcher/contents/ui/RecentView.qml" || true
         rm -rf "$tmp"
 
         # The island (org.lorien.island) reads music, the focus timer and power alerts from isled, the
