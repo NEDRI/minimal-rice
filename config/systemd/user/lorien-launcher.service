@@ -4,3 +4,5 @@ Description=Lorien launcher (rofi, Super+D)
 [Service]
 Type=exec
 ExecStart=rofi -show drun
+# rofi starts the chosen app and quits: stop only rofi, not the app it started
+KillMode=process
